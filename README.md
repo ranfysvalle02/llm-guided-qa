@@ -1,5 +1,38 @@
 # guided-responses
 
+-----
+
+# Unlocking Your Documents with AI: An Interactive Q\&A App
+
+Ever felt like you were drowning in a sea of documents, desperately searching for a single, critical piece of information? We've all been there—trawling through endless PDFs, reports, and manuals just to find one fact.
+
+What if you could simply **ask a question** and have an AI instantly find the answer for you, citing only the documents you provided?
+
+That's exactly what this project is all about. This Flask application is your new AI-powered research assistant, built to transform how you interact with your own data. It's not just a fancy search tool; it's a smart, context-aware system designed to get you the right answer, fast.
+
+## What It Does
+
+This app is a powerful tool that combines the strengths of large language models with a structured, reliable workflow for document analysis.
+
+1.  **Ingest and Digest:** Simply upload your **Documents** (your core content) and **Guides** (supplementary context or summaries). The app intelligently merges this information, creating a comprehensive knowledge base for the AI. It even handles non-text files like PDFs and Word documents, converting them into a readable format using `docling`.
+
+2.  **Ask and Answer:** Submit a question, and the app will generate a direct, factual answer based **only** on your provided files. The AI is specifically instructed to avoid outside knowledge and to tell you if the answer isn't in the documents, preventing common "hallucination" issues.
+
+3.  **Validate with an Expert:** Trust is key. This application includes a unique, parallel evaluation system (powered by Ray). It re-generates an answer and compares it against an "expert" answer to check for **factual consistency** and **completeness**. You get a score and a detailed reason, so you always know you can rely on the results.
+
+4.  **Go Deeper with Workflow Mode:** Need more detail? The interactive **Workflow Mode** lets you have a multi-turn chat with the AI. Ask follow-up questions, request clarifications, or explore related topics—all within the context of your original documents. It's like having a conversation with your data.
+
+## How It's Built
+
+This project is a great example of a robust, production-ready RAG (Retrieval-Augmented Generation) application. It's powered by:
+
+  * **Flask:** A lightweight and flexible web framework for the user interface.
+  * **Azure OpenAI:** The backbone of the application, providing access to powerful language models.
+  * **Ray:** An open-source framework that enables parallel processing for the fast, asynchronous evaluation task.
+  * **Docling:** A handy library for converting a wide range of document types into text.
+
+----
+
 # The Invisible Expert: How a Self-Optimizing Guide Powers Smarter LLM Answers
 
 
