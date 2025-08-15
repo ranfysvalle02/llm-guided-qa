@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>The Looking Glass</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+
+    <style>
+      #chatInput{
+        width:93%;
+      }
+      :root {
+        --bg-deep: #0a1e28; --bg-med: #132a38; --bg-light: #1c3f53;
+        --accent: #00ed64; --accent-dark: #00491e;
+        --text-light: #fff; --text-med: #c5d6e0;
+        --border-color: rgba(255, 255, 255, 0.2);
+        --disabled-color: #4a5e6a; --error-color: #ff9e9e;
+      }
+      *, *::before, *::after { box-sizing: border-box; }
+      body {
+        margin: 0; font-family: "Inter", sans-serif;
+        background: linear-gradient(to bottom right, var(--bg-med), var(--bg-deep));
+        color: var(--text-light); overflow-x: hidden;
+      }
+      .header {
+        position: fixed; width: 100%; background: rgba(28, 63, 83, 0.9);
+        padding: 0.75rem 2rem; top: 0; left: 0; z-index: 1000;
+        display: flex; justify-content: space-between; align-items: center;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+      }
+      .branding { display: flex; align-items: center; gap: 1rem; }
+      .container {
+        margin: 9rem auto 2rem auto; max-width: 1200px;
+        width: 90%; background-color: var(--bg-light);
+        padding: 2rem; border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+      .btn {
+        background-color: var(--accent); color: var(--accent-dark);
+        padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer;
+        font-weight: 600; transition: all 0.2s ease;
+      }
+      .btn:hover:not(:disabled) { background-color: #2cff84; transform: scale(1.05); }
+      .btn:disabled { background-color: var(--disabled-color); color: #88949b; cursor: not-allowed; transform: none; opacity: 0.6; }
+
+      h1, h2, h3 { margin: 0; }
+      h3 { margin-bottom: 0.5rem; }
+      .input-group { margin-bottom: 1.5rem; }
+      .input-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+      .input-group textarea, .input-group select, .input-group input[type="file"], .input-group input[type="text"] {
+        width: 100%; background: var(--bg-med); color: var(--text-light);
+        border: 1px solid var(--border-color); border-radius: 6px;
+        padding: 0.5rem; font-family: inherit; font-size: 1rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      .input-group textarea:focus, .input-group input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0, 237, 100, 0.3); outline: none;}
+      .error-message, .form-note { font-size: 0.9rem; margin-top: 0.5rem; }
+      .error { background-color: #4d202d; border: 1px solid #ff4f4f; padding: 1rem; border-radius: 8px; margin-top: 1rem; }
+      .form-note { color: var(--text-med); }
+      
+      @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      .wizard-tabs { display: flex; list-style: none; margin: 0 0 1rem 0; padding: 0; border-bottom: 1px solid var(--border-color); }
+      .wizard-tab {
+        padding: 0.75rem 1rem; cursor: pointer; border-radius: 8px 8px 0 0; color: var(--text-med);
+        background-color: var(--bg-med); margin-right: 0.5rem; transition: all 0.2s ease;
+      }
+      .wizard-tab.disabled { color: var(--disabled-color); cursor: not-allowed; background-color: transparent; }
+      .wizard-tab.active { background-color: var(--bg-light); color: var(--text-light); }
+      .wizard-tab:not(.disabled):hover { background-color: var(--bg-light); }
+      .wizard-tab-content { display: none; padding: 1rem 0; animation: fadeInUp 0.5s ease forwards; }
+      .wizard-tab-content.active { display: block; }
+      #finalAnalysisBtn { margin-top: 1.5rem; padding: 0.75rem 1.5rem; font-size: 1.1rem; }
+      
+      .spinner-container { position: relative; min-height: 150px; }
+      .spinner-overlay {
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(28, 63, 83, 0.7); backdrop-filter: blur(2px);
+        display: none; justify-content: center; align-items: center;
+        border-radius: 6px; z-index: 10;
+        opacity: 0; transition: opacity 0.3s ease;
+      }
+      .spinner-overlay.show { display: flex; opacity: 1; }
+      .spinner {
+        width: 40px; height: 40px; border: 4px solid var(--border-color);
+        border-top-color: var(--accent); border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      .loading-modal {
+        display: none; position: fixed; left: 0; top: 0; width: 100%; height: 100%;
+        background-color: rgba(19, 42, 56, 0.8); backdrop-filter: blur(5px);
+        justify-content: center; align-items: center; opacity: 0;
+        pointer-events: none; transition: opacity 0.4s ease; z-index: 10000;
+      }
+      .loading-modal.show { display: flex; pointer-events: auto; opacity: 1; }
+      .loading-content { text-align: center; }
+
+      .results-tabs { display: flex; list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--border-color); }
+      .results-tabs .tab { padding: 0.75rem 1rem; cursor: pointer; border-radius: 8px 8px 0 0; transition: all 0.2s ease; }
+      .results-tabs .tab.active { background-color: var(--accent); color: var(--accent-dark); }
+      .results-tabs .tab:not(.active) { background-color: var(--bg-med); }
+      .results-tabs .tab:not(.active):hover { background-color: var(--bg-light); }
+      .results-tab-content { display: none; margin-top: 1rem; background-color: var(--bg-light); border-radius: 8px; padding: 1rem; }
+      .results-tab-content.active { display: block; animation: fadeInUp 0.5s ease; }
+      .scrollable-block { max-height: 65vh; overflow-y: auto; background: var(--bg-med); padding: 1rem; border-radius: 8px; }
+
+      #chatWindow {
+        height: 50vh; overflow-y: auto;
+        padding: 1rem; background-color: var(--bg-med);
+        border: 1px solid var(--border-color); border-radius: 6px;
+        margin-bottom: 1rem; display: flex; flex-direction: column; gap: 1rem;
+      }
+      .chat-bubble { padding: 0.75rem 1rem; border-radius: 12px; max-width: 80%; line-height: 1.5; animation: fadeInUp 0.4s ease; }
+      .chat-bubble.user { background-color: #007530; align-self: flex-end; border-bottom-right-radius: 2px; }
+      .chat-bubble.ai { background-color: #2a4a5e; align-self: flex-start; border-bottom-left-radius: 2px; }
+      .chat-bubble.ai-typing { font-style: italic; color: var(--text-med); }
+      .chat-controls { display: flex; gap: 0.5rem; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="branding">
+<svg 
+    width="140" 
+    height="100" 
+    viewBox="0 0 140 100" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+>
+    <!-- 
+      Final Logo: A central high-availability cluster with a primary node and two secondary nodes.
+      An abundance of magical rays and sparkles represents the powerful, "automagic" sizing capabilities.
+    -->
+    <defs>
+        <!-- Gradient for the central hexagon with a rotating animation for a swirl effect -->
+        <linearGradient id="mongo-gradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="40" y2="40">
+            <stop offset="0%" style="stop-color:#00684A;" />
+            <stop offset="50%" style="stop-color:#00ED64;" />
+            <stop offset="100%" style="stop-color:#A8FFD6;" />
+            <animateTransform
+                attributeName="gradientTransform"
+                type="rotate"
+                from="0 20 20"
+                to="360 20 20"
+                dur="4s"
+                repeatCount="indefinite"
+            />
+        </linearGradient>
+
+        <!-- Gradient for the main sparkle -->
+        <radialGradient id="sparkle-gradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+            <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#00ED64;stop-opacity:0" />
+        </radialGradient>
+    </defs>
+
+    <!-- Main Cluster Group -->
+    <g transform="translate(20, 15)">
+
+        <!-- High Availability Replica Set -->
+        <g id="ha-replica-set">
+            <!-- Secondary Node 1 -->
+            <g transform="translate(0, 25)">
+                 <polygon points="25,18 35,23.66 35,34.34 25,40 15,34.34 15,23.66" fill="#00684A" opacity="0.9"/>
+            </g>
+            <!-- Secondary Node 2 -->
+            <g transform="translate(60, 25)">
+                <polygon points="25,18 35,23.66 35,34.34 25,40 15,34.34 15,23.66" fill="#00684A" opacity="0.9"/>
+            </g>
+
+             <!-- Primary "Sizing" Node -->
+            <g id="primary-node" transform="translate(25, 0)">
+                <g>
+                    <polygon points="25,18 40,26.66 40,43.34 25,52 10,43.34 10,26.66" fill="url(#mongo-gradient)" />
+                    <animateTransform 
+                        attributeName="transform"
+                        type="scale"
+                        values="1;1.05;1"
+                        begin="0s"
+                        dur="3s"
+                        repeatCount="indefinite"
+                        transform-origin="25 35"
+                    />
+                </g>
+            </g>
+        </g>
+        
+        <!-- Magical Flourish and Sparkles -->
+        <g id="automagic-sizing-improved">
+            <!-- Pulsing rays of magic with sparkles at the tips -->
+            <g id="magic-rays" stroke-linecap="round">
+                <!-- Top Rays -->
+                <line x1="50" y1="18" x2="50" y2="-5" stroke="#A8FFD6" stroke-width="2.5"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="0.2s" repeatCount="indefinite" /></line>
+                <circle cx="50" cy="-5" r="3" fill="#FFFFFF"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="0.2s" repeatCount="indefinite" /><animate attributeName="r" values="0;3;0" dur="2.5s" begin="0.2s" repeatCount="indefinite" /></circle>
+                <line x1="60" y1="22" x2="70" y2="5" stroke="#00ED64" stroke-width="2"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="0.4s" repeatCount="indefinite" /></line>
+                <circle cx="70" cy="5" r="2.5" fill="#A8FFD6"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="0.4s" repeatCount="indefinite" /><animate attributeName="r" values="0;2.5;0" dur="2.5s" begin="0.4s" repeatCount="indefinite" /></circle>
+                <line x1="40" y1="22" x2="30" y2="5" stroke="#00ED64" stroke-width="2"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="0.6s" repeatCount="indefinite" /></line>
+                <circle cx="30" cy="5" r="2.5" fill="#A8FFD6"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="0.6s" repeatCount="indefinite" /><animate attributeName="r" values="0;2.5;0" dur="2.5s" begin="0.6s" repeatCount="indefinite" /></circle>
+
+                <!-- Bottom Rays -->
+                <line x1="50" y1="52" x2="50" y2="75" stroke="#A8FFD6" stroke-width="2.5"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="1.2s" repeatCount="indefinite" /></line>
+                <circle cx="50" cy="75" r="3" fill="#FFFFFF"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="1.2s" repeatCount="indefinite" /><animate attributeName="r" values="0;3;0" dur="2.5s" begin="1.2s" repeatCount="indefinite" /></circle>
+                <line x1="60" y1="48" x2="70" y2="65" stroke="#00684A" stroke-width="2"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="1.4s" repeatCount="indefinite" /></line>
+                <circle cx="70" cy="65" r="2.5" fill="#A8FFD6"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="1.4s" repeatCount="indefinite" /><animate attributeName="r" values="0;2.5;0" dur="2.5s" begin="1.4s" repeatCount="indefinite" /></circle>
+                <line x1="40" y1="48" x2="30" y2="65" stroke="#00684A" stroke-width="2"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="1.6s" repeatCount="indefinite" /></line>
+                <circle cx="30" cy="65" r="2.5" fill="#A8FFD6"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="1.6s" repeatCount="indefinite" /><animate attributeName="r" values="0;2.5;0" dur="2.5s" begin="1.6s" repeatCount="indefinite" /></circle>
+            </g>
+
+            <!-- Ambient Sparkles -->
+            <polygon points="98,44 100,41 102,44 105,46 102,48 100,51 98,48 95,46" fill="url(#sparkle-gradient)"><animateTransform attributeName="transform" type="rotate" from="0 100 46" to="360 100 46" dur="5s" repeatCount="indefinite"/></polygon>
+            <polygon points="0,20 1,18 2,20 3,21 2,22 1,24 0,22 -1,21" fill="#00684A" opacity="0.9"><animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite" /></polygon>
+            <circle cx="90" cy="15" r="2" fill="#00ED64"><animate attributeName="r" values="0;2;0" dur="2s" begin="1s" repeatCount="indefinite" /><animate attributeName="opacity" values="0;1;0" dur="2s" begin="1s" repeatCount="indefinite" /></circle>
+            <circle cx="10" cy="60" r="1.5" fill="#A8FFD6"><animate attributeName="r" values="0;1.5;0" dur="2.2s" begin="0.5s" repeatCount="indefinite" /><animate attributeName="opacity" values="0;1;0" dur="2.2s" begin="0.5s" repeatCount="indefinite" /></circle>
+        </g>
+    </g>
+</svg>
+        <h1>The Looking Glass</h1>
+      </div>
+    </div>
+
+    <div class="container">
+      {% if not error and not result %}
+      <form method="POST" enctype="multipart/form-data" id="uploadForm">
+        <ul class="wizard-tabs" id="wizardTabs">
+          <li class="wizard-tab active" data-tab="tabInputs">Step 1: Inputs</li>
+          <li class="wizard-tab disabled" data-tab="tabGuide">Step 2: Guide</li>
+          <li class="wizard-tab disabled" data-tab="tabFinalPrompt">Step 3: Final Prompt</li>
+        </ul>
+        <div id="tabInputs" class="wizard-tab-content active">
+          <div class="input-group">
+            <label for="user_question">Your Question</label>
+            <textarea id="user_question" name="user_question" rows="3" required></textarea>
+          </div>
+          <div class="input-group">
+            <label for="docFilesInput">Document Files (Required)</label>
+            <input type="file" name="document_files" multiple required id="docFilesInput" />
+          </div>
+          <div class="input-group">
+            <label for="guideFilesInput">Guide Files (Optional)</label>
+            <input type="file" name="guide_files" multiple id="guideFilesInput" />
+            <p class="form-note">Optimization will trigger automatically when a question, documents, and guides are all present.</p>
+          </div>
+           <div class="input-group">
+            <label for="reasoning_effort">Reasoning Effort</label>
+            <select name="reasoning_effort" id="reasoning_effort">
+                <option value="high" selected>High (Best Quality)</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low (Fastest)</option>
+            </select>
+          </div>
+        </div>
+        <div id="tabGuide" class="wizard-tab-content">
+          <h3>AI-Optimized Guide (Editable)</h3>
+          <p class="form-note">The AI has generated a guide based on your files. You can review and edit it below.</p>
+          <div class="input-group spinner-container" style="margin-top: 1rem;">
+            <textarea id="optimizedGuideTextarea" name="optimized_guide_content" rows="12"></textarea>
+            <div class="spinner-overlay" id="guideSpinnerOverlay"><div class="spinner"></div></div>
+          </div>
+          <button type="button" class="btn" id="prepareFinalPromptBtn" disabled>Prepare Final Prompt</button>
+        </div>
+        <div id="tabFinalPrompt" class="wizard-tab-content">
+          <h3>Final Prompt Review (Editable)</h3>
+          <p class="form-note">This is the complete prompt that will be sent to the AI. You have final editorial control.</p>
+          <div class="input-group" style="margin-top: 1rem;">
+              <textarea id="finalPromptTextarea" name="final_prompt_text" rows="15"></textarea>
+          </div>
+        </div>
+        <button type="submit" class="btn" id="finalAnalysisBtn" disabled>Analyze!</button>
+      </form>
+      {% endif %}
+
+      {% if error %}<div class="error"><strong>Error:</strong> {{ error }}</div>{% endif %}
+
+      {% if result %}
+      <div class="results-container">
+        <h2>Results</h2>
+        <div style="margin-top: 1rem; background-color: var(--bg-med); border-radius: 8px; padding: 1rem;">
+            <ul class="results-tabs" id="resultsTabs">
+              <li class="tab active" data-tab="tabAnswer">Answer</li>
+              <li class="tab" data-tab="tabChat">Chat</li>
+              <li class="tab" data-tab="tabEval">Evaluation</li>
+              <li class="tab" data-tab="tabGuide2">Submitted Guide</li>
+              <li class="tab" data-tab="tabDocs2">Documents</li>
+            </ul>
+            <div class="results-tab-content active" id="tabAnswer">{{ result|safe }}{% if reasoning_summaries %}<hr><h3>Reasoning Summaries</h3><ul class="scrollable-block" style="max-height:150px;">{% for summary in reasoning_summaries %}<li>{{ summary }}</li>{% endfor %}</ul>{% endif %}</div>
+            <div class="results-tab-content" id="tabChat">
+                <div id="chatDebugInfo" style="font-size: 0.8rem; color: var(--text-med); margin-bottom: 0.5rem;"></div>
+                <div id="chatWindow"></div>
+                <div class="chat-controls">
+                    <input type="text" id="chatInput" placeholder="Ask a follow-up question...">
+                    <button class="btn" id="sendChatBtn">Send</button>
+                </div>
+            </div>
+            <div class="results-tab-content" id="tabEval"><p>Evaluation results are pending...</p></div>
+            <div class="results-tab-content" id="tabGuide2"><div class="scrollable-block" id="guideContentBlock"></div></div>
+            <div class="results-tab-content" id="tabDocs2"><div class="scrollable-block" id="docContentBlock"></div></div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div id="loading-modal" class="loading-modal"><div class="loading-content"><h3>Analyzing...</h3><div class="spinner" style="margin: 1rem auto;"></div></div></div>
+    
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const uploadForm = document.getElementById("uploadForm");
+      if (uploadForm) {
+          setupWizardForm();
+      } else {
+          setupResultsPage();
+      }
+    });
+
+    function setupWizardForm() {
+        const userQuestionInput = document.getElementById("user_question");
+        const docFilesInput = document.getElementById("docFilesInput");
+        const guideFilesInput = document.getElementById("guideFilesInput");
+        
+        const prepareFinalPromptBtn = document.getElementById("prepareFinalPromptBtn");
+        const finalAnalysisBtn = document.getElementById("finalAnalysisBtn");
+        
+        const wizardTabs = document.getElementById("wizardTabs");
+        const guideSpinner = document.getElementById("guideSpinnerOverlay");
+        const loadingModal = document.getElementById("loading-modal");
+        
+        let isGuideOptimized = false;
+
+        function showLoading(modal, show = true) { modal.classList.toggle('show', show); }
+
+        function switchTab(targetTabId) {
+            document.querySelectorAll('.wizard-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.wizard-tab-content').forEach(c => c.classList.remove('active'));
+            const targetTab = document.querySelector(`.wizard-tab[data-tab="${targetTabId}"]`);
+            if (targetTab) {
+                targetTab.classList.remove('disabled');
+                targetTab.classList.add('active');
+                document.getElementById(targetTabId).classList.add('active');
+            }
+        }
+        
+        wizardTabs.addEventListener('click', (e) => {
+            if (e.target.classList.contains('wizard-tab') && !e.target.classList.contains('disabled')) {
+                switchTab(e.target.dataset.tab);
+            }
+        });
+
+        async function updateWizardState() {
+            const hasQuestion = userQuestionInput.value.trim() !== '';
+            const hasDocs = docFilesInput.files.length > 0;
+            const hasGuides = guideFilesInput.files.length > 0;
+
+            if (hasQuestion && hasDocs && hasGuides && !isGuideOptimized) {
+                isGuideOptimized = true;
+                showLoading(guideSpinner, true);
+                switchTab('tabGuide');
+                prepareFinalPromptBtn.disabled = true;
+
+                try {
+                    const response = await fetch("/optimize_guide", { method: "POST", body: new FormData(uploadForm) });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error);
+                    document.getElementById('optimizedGuideTextarea').value = data.optimized_guide;
+                    prepareFinalPromptBtn.disabled = false;
+                } catch (e) {
+                    alert(`Error optimizing guide: ${e.message}`);
+                    resetToInputs();
+                } finally {
+                    showLoading(guideSpinner, false);
+                }
+            } else if (!hasQuestion || !hasDocs) {
+                resetToInputs();
+            }
+        }
+        
+        function resetToInputs() {
+            isGuideOptimized = false;
+            document.getElementById('optimizedGuideTextarea').value = '';
+            document.getElementById('finalPromptTextarea').value = '';
+            prepareFinalPromptBtn.disabled = true;
+            finalAnalysisBtn.disabled = true;
+            document.querySelector('.wizard-tab[data-tab="tabGuide"]').classList.add('disabled');
+            document.querySelector('.wizard-tab[data-tab="tabFinalPrompt"]').classList.add('disabled');
+            if(!document.querySelector('.wizard-tab[data-tab="tabInputs"]').classList.contains('active')) {
+                switchTab('tabInputs');
+            }
+        }
+        
+        let debounceTimer;
+        userQuestionInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(updateWizardState, 500);
+        });
+
+        docFilesInput.addEventListener('change', updateWizardState);
+        guideFilesInput.addEventListener('change', updateWizardState);
+
+        prepareFinalPromptBtn.addEventListener('click', async () => {
+            showLoading(loadingModal, true);
+            try {
+                const response = await fetch("/preview_final_prompt", { method: "POST", body: new FormData(uploadForm) });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error);
+                document.getElementById('finalPromptTextarea').value = data.prompt;
+                finalAnalysisBtn.disabled = false;
+                switchTab('tabFinalPrompt');
+            } catch (e) {
+                alert(`Error preparing final prompt: ${e.message}`);
+            } finally {
+                showLoading(loadingModal, false);
+            }
+        });
+
+        uploadForm.addEventListener('submit', (e) => { showLoading(loadingModal, true); });
+    }
+
+    function setupResultsPage() {
+        const guideText = {{ guide_text|default("")|tojson|safe }};
+        const docText = {{ doc_text|default("")|tojson|safe }};
+        const requestId = {{ request_id|default('null')|tojson }};
+        const converter = new showdown.Converter({ghCompatibleHeaderId: true, simpleLineBreaks: true});
+
+        const guideBlock = document.getElementById("guideContentBlock");
+        if (guideBlock) guideBlock.innerHTML = converter.makeHtml(guideText);
+        
+        const docBlock = document.getElementById("docContentBlock");
+        if (docBlock) docBlock.innerHTML = converter.makeHtml(docText);
+
+        const resultsTabs = document.getElementById("resultsTabs");
+        if(resultsTabs) {
+            resultsTabs.addEventListener("click", (e) => {
+                const tab = e.target.closest('.tab');
+                if(tab) {
+                    document.querySelector('.results-tabs .tab.active')?.classList.remove('active');
+                    document.querySelector('.results-tab-content.active')?.classList.remove('active');
+                    tab.classList.add('active');
+                    document.getElementById(tab.dataset.tab).classList.add('active');
+                }
+            });
+        }
+        
+        const chatWindow = document.getElementById('chatWindow');
+        const chatInput = document.getElementById('chatInput');
+        const sendChatBtn = document.getElementById('sendChatBtn');
+        
+        function appendBubble(html, who) {
+            const bubble = document.createElement('div');
+            bubble.classList.add('chat-bubble', who);
+            bubble.innerHTML = html;
+            chatWindow.appendChild(bubble);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        async function sendChat() {
+            const message = chatInput.value.trim();
+            if(!message || !requestId) return;
+            
+            appendBubble(converter.makeHtml(message), 'user');
+            chatInput.value = '';
+            chatInput.disabled = true;
+            sendChatBtn.disabled = true;
+            appendBubble('<em>Typing...</em>', 'ai-typing');
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ request_id: requestId, user_message: message })
+                });
+                document.querySelector('.ai-typing')?.remove();
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error);
+                appendBubble(data.reply, 'ai');
+
+                const debugInfoDiv = document.getElementById('chatDebugInfo');
+                if (data.conversation_id && debugInfoDiv && !debugInfoDiv.innerText) {
+                    debugInfoDiv.innerText = `Traceability -- Request ID: ${requestId} | Conversation ID: ${data.conversation_id}`;
+                }
+            } catch (e) {
+                appendBubble(`<strong>Error:</strong> ${e.message}`, 'ai');
+            } finally {
+                chatInput.disabled = false;
+                sendChatBtn.disabled = false;
+                chatInput.focus();
+            }
+        }
+        if (sendChatBtn) sendChatBtn.addEventListener('click', sendChat);
+        if (chatInput) chatInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') sendChat(); });
+
+        const evalTabContent = document.getElementById("tabEval");
+        if (requestId && evalTabContent) {
+            let attempts = 0;
+            const pollInterval = setInterval(async () => {
+                if (++attempts > 40) { clearInterval(pollInterval); evalTabContent.innerHTML = "<p>Evaluation timed out after 2 minutes.</p>"; return; }
+                try {
+                    const response = await fetch(`/get_evaluation_results/${requestId}`);
+                    if (response.status === 200) {
+                        clearInterval(pollInterval);
+                        const data = await response.json();
+                        let resultsHtml = `<h3>Evaluation Complete</h3>
+                          <p><strong>Choice:</strong> ${data.factuality_evaluation_choice || 'N/A'} (Score: ${data.factuality_evaluation_score || 0.0})</p>
+                          <p><strong>Reason:</strong> ${data.factuality_evaluation_reason || 'No reason provided.'}</p><hr>
+                          <h4>Submitted Answer (for this evaluation)</h4><pre>${data.submitted_answer || 'N/A'}</pre>
+                          <h4>Expert Answer (from initial run)</h4><pre>${data.expert_answer || 'N/A'}</pre>`;
+                        evalTabContent.innerHTML = resultsHtml.replace(/<pre>/g, '<pre style="white-space:pre-wrap; background: var(--bg-med); padding: 0.5rem; border-radius: 4px;">');
+                    } else if (response.status !== 202) {
+                        clearInterval(pollInterval);
+                        evalTabContent.innerHTML = `<p>Error fetching results: Status ${response.status}</p>`;
+                    }
+                } catch (error) {
+                    clearInterval(pollInterval);
+                    evalTabContent.innerHTML = "<p>A client-side error occurred while polling for evaluation results.</p>";
+                }
+            }, 3000);
+        }
+    }
+    </script>
+  </body>
+</html>
