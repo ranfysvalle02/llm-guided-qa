@@ -388,7 +388,7 @@ def chat():
             f"### ORIGINAL QUESTION: {original_request.get('user_question', '')}\n\n"
             f"### INITIAL ANSWER:\n{original_request.get('final_answer', '')}\n\n"
             f"---\n\n"
-            f"## CONVERSATION HISTORY\n{history_string}\nAssistant:"
+            f"## CONVERSATION HISTORY\n{history_string}\n\n"
         )
 
         reasoned_result = get_reasoned_llm_response(global_az_client, base_prompt, deployment, effort="medium")
