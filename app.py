@@ -361,24 +361,23 @@ def chat():
         return jsonify({"error": "Request ID and message are required."}), 400
 
     try:
+        # 1. Find the original request and conversation documents
         conversation_doc = conversations_collection.find_one({"request_id": request_id_str})
         if not conversation_doc:
             return jsonify({"error": "Conversation context not found."}), 404
-
-        conversation_id = str(conversation_doc.get('_id'))
 
         original_request = requests_collection.find_one({"_id": ObjectId(request_id_str)})
         if not original_request:
             return jsonify({"error": "Original request data not found."}), 404
 
-        new_history_entry = {"role": "user", "content": user_message}
-        conversations_collection.update_one(
-            {"request_id": request_id_str},
-            {"$push": {"history": new_history_entry}}
-        )
+        conversation_id = str(conversation_doc.get('_id'))
 
+        # 2. Get current history and update it IN MEMORY first
         current_history = conversation_doc.get("history", [])
-        current_history.append(new_history_entry)
+        new_user_entry = {"role": "user", "content": user_message}
+        current_history.append(new_user_entry)
+        
+        # 3. Use the complete, up-to-date history for the prompt
         history_string = format_history_as_string(current_history)
 
         base_prompt = (
@@ -395,9 +394,11 @@ def chat():
         reasoned_result = get_reasoned_llm_response(global_az_client, base_prompt, deployment, effort="medium")
         ai_reply = reasoned_result["answer"]
 
+        # 4. Now, persist the user message AND the AI reply to the database
+        new_ai_entry = {"role": "assistant", "content": ai_reply}
         conversations_collection.update_one(
             {"request_id": request_id_str},
-            {"$push": {"history": {"role": "assistant", "content": ai_reply}}}
+            {"$push": {"history": {"$each": [new_user_entry, new_ai_entry]}}}
         )
 
         return jsonify({
