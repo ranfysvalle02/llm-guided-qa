@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>The Looking Glass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
+rel="stylesheet"
+/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+
+<style>
+:root {
+--bg-deep: #0a1e28; --bg-med: #132a38; --bg-light: #1c3f53;
+--accent: #00ed64; --accent-dark: #00491e;
+--text-light: #fff; --text-med: #c5d6e0;
+--border-color: rgba(255, 255, 255, 0.2);
+--disabled-color: #4a5e6a; --error-color: #ff9e9e;
+}
+*, *::before, *::after { box-sizing: border-box; }
+@keyframes background-pan {
+0% { background-position: 0% 50%; }
+50% { background-position: 100% 50%; }
+100% { background-position: 0% 50%; }
+}
+body {
+margin: 0; font-family: "Inter", sans-serif;
+background: linear-gradient(125deg, var(--bg-deep), var(--bg-med), var(--bg-deep));
+background-size: 200% 200%;
+animation: background-pan 25s ease infinite;
+color: var(--text-light); overflow-x: hidden;
+}
+.header {
+position: fixed; width: 100%; background: rgba(10, 30, 40, 0.7);
+backdrop-filter: blur(8px);
+padding: 0.75rem 2rem; top: 0; left: 0; z-index: 1000;
+border-bottom: 1px solid var(--border-color);
+display: flex; justify-content: space-between; align-items: center;
+}
+.branding { display: flex; align-items: center; gap: 1rem; }
+.header-actions { display: flex; align-items: center; gap: 1rem; }
+.container {
+margin: 9rem auto 2rem auto; max-width: 1200px;
+width: 90%; background-color: var(--bg-light);
+padding: 2rem; border-radius: 8px;
+box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+border: 1px solid var(--border-color);
+}
+.btn {
+background-color: var(--accent); color: var(--accent-dark);
+padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer;
+font-weight: 600; transition: all 0.2s ease;
+}
+.btn:hover:not(:disabled) { background-color: #2cff84; transform: scale(1.05); }
+.btn:active:not(:disabled) { transform: scale(0.98); }
+.btn:disabled { background-color: var(--disabled-color); color: #88949b; cursor: not-allowed; transform: none; opacity: 0.6; }
+.btn-secondary { background-color: var(--bg-med); color: var(--text-med); border: 1px solid var(--border-color); }
+.btn-secondary:hover:not(:disabled) { background-color: var(--bg-light); }
+.btn-small { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
+.btn-icon {
+background-color: var(--bg-med); color: var(--text-med); width: 36px; height: 36px;
+border-radius: 50%; display: flex; justify-content: center; align-items: center;
+padding: 0; border: 1px solid var(--border-color);
+}
+.btn-icon:hover { background-color: var(--bg-light); color: var(--text-light); }
+
+
+h1, h2, h3 { margin: 0; }
+h2 { color: var(--accent); margin-bottom: 0.5rem; font-weight: 700; }
+h3 { margin-bottom: 0.5rem; }
+.input-group { margin-bottom: 1.5rem; }
+.input-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.input-group textarea, .input-group select, .input-group input[type="file"], .input-group input[type="text"] {
+width: 100%; background: var(--bg-med); color: var(--text-light);
+border: 1px solid var(--border-color); border-radius: 6px;
+padding: 0.5rem; font-family: inherit; font-size: 1rem;
+transition: all 0.2s ease-in-out;
+}
+.input-group textarea:focus, .input-group input[type="text"]:focus {
+border-color: var(--accent);
+box-shadow: 0 0 0 3px rgba(0, 237, 100, 0.3);
+outline: none;
+transform: scale(1.01);
+}
+.error-message, .form-note { font-size: 0.9rem; margin-top: 0.5rem; }
+.error { background-color: #4d202d; border: 1px solid #ff4f4f; padding: 1rem; border-radius: 8px; margin-top: 1rem; }
+.form-note { color: var(--text-med); }
+
+/* Collapsible Guide Section */
+details.input-group {
+background-color: var(--bg-med);
+border-radius: 8px;
+border: 1px solid var(--border-color);
+}
+details.input-group summary {
+padding: 0.75rem 1rem;
+font-weight: 500;
+cursor: pointer;
+list-style: none;
+}
+details.input-group summary::-webkit-details-marker { display: none; }
+details.input-group[open] summary {
+border-bottom: 1px solid var(--border-color);
+}
+.guide-content {
+padding: 1rem;
+}
+.guide-content .input-group {
+margin-bottom: 0; /* Reset margin for nested group */
+}
+
+
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.wizard-tabs { display: flex; list-style: none; margin: 0 0 1rem 0; padding: 0; border-bottom: 1px solid var(--border-color); }
+.wizard-tab {
+padding: 0.75rem 1rem; cursor: pointer; border-radius: 8px 8px 0 0; color: var(--text-med);
+background-color: var(--bg-med); margin-right: 0.5rem; position: relative;
+transition: all 0.2s ease;
+}
+.wizard-tab::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background-color: var(--accent); transform: scaleX(0); transition: transform 0.3s ease; }
+.wizard-tab.disabled { color: var(--disabled-color); cursor: not-allowed; background-color: transparent; }
+.wizard-tab.active { background-color: var(--bg-light); color: var(--text-light); }
+.wizard-tab.active::after { transform: scaleX(1); }
+.wizard-tab:not(.disabled):hover { background-color: var(--bg-light); }
+.wizard-tab-content { display: none; padding: 1rem 0; animation: fadeInUp 0.5s ease forwards; }
+.wizard-tab-content.active { display: block; }
+#finalAnalysisBtn { margin-top: 1.5rem; padding: 0.75rem 1.5rem; font-size: 1.1rem; }
+
+.spinner {
+width: 40px; height: 40px; border: 4px solid var(--border-color);
+border-top-color: var(--accent); border-radius: 50%;
+animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-modal {
+display: none; position: fixed; left: 0; top: 0; width: 100%; height: 100%;
+background-color: rgba(10, 30, 40, 0.8); backdrop-filter: blur(5px);
+justify-content: center; align-items: center; opacity: 0;
+pointer-events: none; transition: opacity 0.4s ease; z-index: 10000;
+}
+.loading-modal.show { display: flex; pointer-events: auto; opacity: 1; }
+.loading-content { text-align: center; }
+.loading-content h3 { transition: opacity 0.3s ease-in-out; }
+
+.results-tabs { display: flex; list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--border-color); }
+.results-tabs .tab { padding: 0.75rem 1rem; cursor: pointer; border-radius: 8px 8px 0 0; transition: all 0.2s ease; }
+.results-tabs .tab.active { background-color: var(--accent); color: var(--accent-dark); }
+.results-tabs .tab:not(.active) { background-color: var(--bg-med); }
+.results-tabs .tab:not(.active):hover { background-color: var(--bg-light); }
+.results-tab-content { display: none; margin-top: 1rem; background-color: var(--bg-light); border-radius: 8px; padding: 1rem; }
+.results-tab-content.active { display: block; animation: fadeInUp 0.5s ease; }
+.scrollable-block { max-height: 65vh; overflow-y: auto; background: var(--bg-med); padding: 1rem; border-radius: 8px; }
+
+.intro-blurb {
+display: flex; gap: 1.5rem; background-color: var(--bg-med);
+padding: 1.5rem; border-radius: 8px;
+border-left: 4px solid var(--accent); margin-bottom: 2rem;
+}
+.intro-blurb p { color: var(--text-med); margin: 0.5rem 0 1rem 0; line-height: 1.6; }
+.formula { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; font-weight: 500; }
+.formula .pill {
+background-color: var(--bg-light); padding: 0.25rem 0.75rem;
+border-radius: 1rem; font-size: 0.9rem;
+}
+.formula .pill.accent { background-color: var(--accent-dark); color: var(--accent); }
+
+.reasoning-spotlight, .similarity-item {
+background: rgba(10, 30, 40, 0.6); border: 1px solid var(--border-color);
+border-radius: 8px; margin-bottom: 1rem;
+}
+.reasoning-toggle, .similarity-item-summary {
+display: flex; align-items: center; gap: 0.75rem; width: 100%;
+font-weight: 600; color: var(--text-light);
+background-color: transparent; border: none; cursor: pointer; list-style: none;
+}
+.reasoning-toggle { padding: 1rem 1.25rem; font-size: 1.1rem; }
+.similarity-item-summary { padding: 0.75rem 1rem; font-size: 0.95rem; }
+
+.reasoning-toggle::-webkit-details-marker, .similarity-item-summary::-webkit-details-marker { display: none; }
+.reasoning-toggle:hover, .similarity-item-summary:hover { background-color: var(--bg-med); }
+.chevron { margin-left: auto; transition: transform 0.3s ease; }
+details[open] > summary .chevron { transform: rotate(180deg); }
+
+.reasoning-content, .similarity-item-content {
+display: grid; grid-template-rows: 0fr;
+transition: grid-template-rows 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.similarity-item-content { padding: 0 1rem; }
+details[open] > .reasoning-content, details[open] > .similarity-item-content { grid-template-rows: 1fr; }
+.reasoning-content > div, .similarity-item-content > div { overflow: hidden; }
+.similarity-item-content > div { padding: 0.5rem 0 1rem 0; border-top: 1px solid var(--border-color); }
+
+.reasoning-steps {
+list-style: none; padding: 0.5rem 1.25rem 1.5rem 3rem; margin: 0;
+position: relative; border-top: 1px solid var(--border-color);
+}
+.reasoning-steps::before {
+content: ''; position: absolute; left: 1.25rem; top: 1.5rem; bottom: 1.5rem; width: 2px;
+background: linear-gradient(var(--accent-dark), var(--accent), var(--accent-dark));
+border-radius: 1px; transform: scaleY(0); transform-origin: top;
+}
+details[open] .reasoning-steps::before {
+transform: scaleY(1); transition: transform 0.4s cubic-bezier(0.86, 0, 0.07, 1) 0.2s;
+}
+.reasoning-step {
+position: relative; padding: 0.5rem 0; opacity: 0; line-height: 1.5; color: var(--text-med);
+}
+details[open] .reasoning-step {
+animation: stepFadeInUp 0.5s ease-out forwards;
+animation-delay: calc(var(--i) * 150ms + 0.3s);
+}
+.reasoning-step::before {
+content: ''; position: absolute; left: -2.35rem; top: 1rem; width: 10px; height: 10px;
+border-radius: 50%; background-color: var(--bg-deep);
+border: 2px solid var(--accent); transform: scale(0);
+}
+details[open] .reasoning-step::before {
+transform: scale(1); transition: transform 0.3s ease-out;
+transition-delay: calc(var(--i) * 150ms + 0.5s);
+}
+@keyframes stepFadeInUp { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); }}
+
+/* --- Similarity Search UI --- */
+.similarity-search-container { margin-top: 1.5rem; }
+.similarity-search-container summary {
+display: flex; align-items: center; gap: 0.5rem; width: 100%;
+font-weight: 500; padding: 0.75rem 1rem;
+background-color: var(--bg-med); border: 1px solid var(--border-color); border-radius: 8px;
+cursor: pointer; transition: background-color 0.2s; list-style: none;
+}
+.similarity-search-container summary::-webkit-details-marker { display: none; }
+.similarity-search-container summary:hover { background-color: var(--bg-light); }
+.similarity-search-container[open] > summary { border-radius: 8px 8px 0 0; }
+.similarity-search-content {
+border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px;
+padding: 0.5rem;
+}
+.similarity-search-container[open] .similarity-item {
+opacity: 0; animation: stepFadeInUp 0.5s ease-out forwards;
+animation-delay: calc(var(--i) * 100ms);
+}
+.similarity-item-actions {
+display: flex; gap: 0.5rem; margin-top: 0.75rem; align-items: center;
+}
+/* Non-collapsible guide suggestions */
+.suggestion-item {
+padding: 1rem; border-bottom: 1px solid var(--border-color);
+opacity: 0; animation: stepFadeInUp 0.5s ease-out forwards;
+animation-delay: calc(var(--i) * 100ms);
+background-color: var(--bg-deep); border-radius: 6px; margin-bottom: 0.5rem;
+}
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item pre {
+white-space: pre-wrap; word-break: break-word; background-color: var(--bg-med);
+padding: 0.75rem; border-radius: 6px; max-height: 150px; overflow-y: auto;
+font-size: 0.9rem; color: var(--text-med);
+}
+.suggestion-item button { margin-top: 0.75rem; }
+.suggestion-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.similarity-score {
+font-size: 0.8rem; color: var(--accent); background: var(--accent-dark);
+padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.4rem;
+}
+
+/* Tooltip Styles */
+.tooltip-trigger { position: relative; cursor: help; }
+.tooltip-trigger::after {
+content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%;
+transform: translateX(-50%); background-color: var(--bg-deep); color: var(--text-light);
+padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.85rem;
+white-space: nowrap; opacity: 0; pointer-events: none;
+transition: opacity 0.2s, bottom 0.2s; z-index: 10;
+box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+.tooltip-trigger:hover::after { opacity: 1; bottom: 140%; }
+
+/* --- Modals --- */
+.modal-backdrop {
+display: none; position: fixed; z-index: 20000;
+left: 0; top: 0; width: 100%; height: 100%;
+background-color: rgba(10, 30, 40, 0.7);
+backdrop-filter: blur(8px);
+opacity: 0; transition: opacity 0.3s ease;
+}
+.modal-backdrop.show { display: flex; opacity: 1; }
+.modal-content {
+margin: auto; background-color: var(--bg-light);
+padding: 1.5rem 2rem; border-radius: 12px;
+border: 1px solid var(--border-color);
+box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+width: 90%; max-width: 700px;
+position: relative;
+transform: translateY(20px);
+transition: transform 0.3s ease;
+}
+.modal-backdrop.show .modal-content { transform: translateY(0); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.modal-header h3 { color: var(--accent); }
+.close-btn { background: none; border: none; color: var(--text-med); font-size: 1.5rem; cursor: pointer; transition: color 0.2s; }
+.close-btn:hover { color: var(--text-light); }
+
+/* --- Search Tuner Styles (now inside chat context modal) --- */
+.search-flow-diagram {
+--keyword-weight: 0.3;
+--semantic-weight: 0.7;
+}
+.flow-paths { display: flex; gap: 1rem; align-items: flex-start; margin-top: 1rem; }
+.flow-path {
+background-color: var(--bg-med); border-radius: 8px; padding: 1rem;
+border: 1px solid var(--border-color);
+transition: flex-grow 0.3s ease, opacity 0.3s ease;
+}
+.flow-path h4 { margin: 0 0 0.25rem 0; color: var(--text-light); }
+.flow-path p { margin: 0; font-size: 0.8rem; color: var(--text-med); }
+#keywordPath { flex-grow: var(--keyword-weight); opacity: calc(var(--keyword-weight) * 0.8 + 0.2); }
+#semanticPath { flex-grow: var(--semantic-weight); opacity: calc(var(--semantic-weight) * 0.8 + 0.2); }
+#sliderExplanation { text-align: center; color: var(--accent); font-weight: 500; font-size: 0.9rem; min-height: 1.2em; transition: opacity 0.3s; margin-top: 1rem; }
+
+input[type="range"] {
+-webkit-appearance: none; appearance: none;
+width: 100%; height: 6px; background: var(--bg-deep);
+border-radius: 3px; outline: none; margin-top: 1rem;
+}
+input[type="range"]::-webkit-slider-thumb {
+-webkit-appearance: none; appearance: none;
+width: 20px; height: 20px; background: var(--accent);
+border-radius: 50%; cursor: pointer;
+box-shadow: 0 0 10px rgba(0, 237, 100, 0.5);
+border: 3px solid var(--bg-light);
+}
+.result-card-content {
+background-color: var(--bg-med);
+border-radius: 8px;
+padding: 1rem;
+margin-top: 0.5rem;
+}
+.result-card-content h5 {
+color: var(--accent);
+margin: 0 0 0.5rem 0;
+border-bottom: 1px solid var(--border-color);
+padding-bottom: 0.5rem;
+}
+
+/* Help Modal Specific Styles */
+#helpModalContent h4, #augmentModalContent h4 {
+color: var(--accent);
+margin-top: 1.5rem;
+margin-bottom: 0.5rem;
+border-bottom: 1px solid var(--border-color);
+padding-bottom: 0.5rem;
+}
+#helpModalContent h4:first-child, #augmentModalContent h4:first-of-type {
+margin-top: 0;
+}
+#helpModalContent p, #helpModalContent li, #augmentModalContent p, #augmentModalContent ol {
+color: var(--text-med);
+line-height: 1.6;
+}
+#helpModalContent ul {
+padding-left: 1.5rem;
+}
+#helpModalContent code {
+background-color: var(--bg-deep);
+padding: 2px 5px;
+border-radius: 4px;
+font-family: monospace;
+color: var(--accent);
+}
+
+/* --- PROMPT REVIEW TABS --- */
+#promptReviewer { display: none; margin-top: 1rem; }
+.prompt-tabs {
+display: flex; list-style: none; margin: 0; padding: 0;
+border-bottom: 1px solid var(--border-color);
+}
+.prompt-tab {
+padding: 0.5rem 1rem; cursor: pointer; color: var(--text-med);
+border-radius: 6px 6px 0 0;
+}
+.prompt-tab.active {
+background-color: var(--bg-med);
+color: var(--text-light);
+font-weight: 500;
+}
+.prompt-tab-content { display: none; }
+.prompt-tab-content.active { display: block; }
+.prompt-tab-content pre {
+width: 100%;
+min-height: 300px;
+background: var(--bg-med); color: var(--text-light);
+border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 6px 6px;
+padding: 1rem; font-family: inherit; font-size: 1rem;
+margin: 0;
+white-space: pre-wrap;
+word-wrap: break-word;
+max-height: 40vh;
+overflow-y: auto;
+}
+
+/* --- Chat Context Snippet --- */
+.chat-context-snippet {
+display: flex; align-items: center; justify-content: space-between;
+background-color: var(--bg-deep);
+padding: 0.5rem 0.75rem;
+border-radius: 6px;
+border-left: 3px solid var(--accent);
+font-size: 0.9rem;
+margin-bottom: 0.5rem;
+}
+.chat-context-snippet em {
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+color: var(--text-med);
+}
+
+/* --- NEW: Chat UI Enhancements --- */
+.context-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--bg-deep);
+  color: var(--text-med);
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.85rem;
+  border: 1px solid var(--border-color);
+  animation: stepFadeInUp 0.4s ease-out forwards;
+}
+.context-pill button {
+  background: none;
+  border: none;
+  color: var(--text-med);
+  cursor: pointer;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+.context-pill button:hover {
+  color: var(--text-light);
+}
+
+.chat-bubble {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  max-width: 85%;
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+.chat-bubble.user {
+  background-color: var(--accent-dark);
+  color: var(--text-light);
+  align-self: flex-end;
+  border-bottom-right-radius: 2px;
+}
+.chat-bubble.ai {
+  background-color: var(--bg-med);
+  align-self: flex-start;
+  border-bottom-left-radius: 2px;
+}
+.chat-bubble.ai-typing {
+  font-style: italic;
+  color: var(--text-med);
+}
+.chat-bubble details {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 0.5rem;
+  background: rgba(0,0,0,0.2);
+}
+.chat-bubble details summary {
+  font-weight: 500;
+}
+#chatPreviewContent {
+  background-color: rgba(0, 237, 100, 0.05);
+  border: 1px solid rgba(0, 237, 100, 0.2);
+  align-self: stretch; /* Make it full width */
+}
+
+
+/* Chat Context Modal Specifics */
+.context-search-result {
+display: flex; align-items: center; gap: 1rem; padding: 0.75rem;
+border-radius: 6px;
+}
+.context-search-result:hover { background: var(--bg-med); }
+.context-search-result input[type="checkbox"] { flex-shrink: 0; }
+.context-search-result-text {
+font-size: 0.9rem;
+display: flex; flex-direction: column;
+overflow: hidden;
+}
+.context-search-result-text strong {
+white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.context-search-result-text small {
+white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+color: var(--text-med);
+}
+
+</style>
+</head>
+<body>
+<div class="header">
+<div class="branding">
+<svg
+	width="140"
+	height="100"
+	viewBox="0 0 140 100"
+	fill="none"
+	xmlns="http://www.w3.org/2000/svg"
+>
+	<defs>
+	 <linearGradient id="mongo-gradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="40" y2="40">
+	 	<stop offset="0%" style="stop-color:#00684A;" />
+	 	<stop offset="50%" style="stop-color:#00ED64;" />
+	 	<stop offset="100%" style="stop-color:#A8FFD6;" />
+	 	<animateTransform
+	 	 attributeName="gradientTransform"
+	 	 type="rotate"
+	 	 from="0 20 20"
+	 	 to="360 20 20"
+	 	 dur="4s"
+	 	 repeatCount="indefinite"
+	 	/>
+	 </linearGradient>
+	</defs>
+	<g transform="translate(20, 15)">
+	 <g id="ha-replica-set">
+	 	<g transform="translate(0, 25)">
+	 	 <polygon points="25,18 35,23.66 35,34.34 25,40 15,34.34 15,23.66" fill="#00684A" opacity="0.9"/>
+	 	</g>
+	 	<g transform="translate(60, 25)">
+	 	 <polygon points="25,18 35,23.66 35,34.34 25,40 15,34.34 15,23.66" fill="#00684A" opacity="0.9"/>
+	 	</g>
+	 	<g id="primary-node" transform="translate(25, 0)">
+	 	 <g>
+	 	 	<polygon points="25,18 40,26.66 40,43.34 25,52 10,43.34 10,26.66" fill="url(#mongo-gradient)" />
+	 	 	<animateTransform
+	 	 	 attributeName="transform"
+	 	 	 type="scale"
+	 	 	 values="1;1.05;1"
+	 	 	 begin="0s"
+	 	 	 dur="3s"
+	 	 	 repeatCount="indefinite"
+	 	 	 transform-origin="25 35"
+	 	 	/>
+	 	 </g>
+	 	</g>
+	 </g>
+	 <g id="automagic-sizing-improved">
+	 	<g id="magic-rays" stroke-linecap="round">
+	 	 <line x1="50" y1="18" x2="50" y2="-5" stroke="#A8FFD6" stroke-width="2.5"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="0.2s" repeatCount="indefinite" /></line>
+	 	 <circle cx="50" cy="-5" r="3" fill="#FFFFFF"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="0.2s" repeatCount="indefinite" /><animate attributeName="r" values="0;3;0" dur="2.5s" begin="0.2s" repeatCount="indefinite" /></circle>
+	 	 <line x1="60" y1="22" x2="70" y2="5" stroke="#00ED64" stroke-width="2"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="0.4s" repeatCount="indefinite" /></line>
+	 	 <circle cx="70" cy="5" r="2.5" fill="#A8FFD6"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="0.4s" repeatCount="indefinite" /><animate attributeName="r" values="0;2.5;0" dur="2.5s" begin="0.4s" repeatCount="indefinite" /></circle>
+	 	 <line x1="40" y1="22" x2="30" y2="5" stroke="#00ED64" stroke-width="2"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="0.6s" repeatCount="indefinite" /></line>
+	 	 <circle cx="30" cy="5" r="2.5" fill="#A8FFD6"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="0.6s" repeatCount="indefinite" /><animate attributeName="r" values="0;2.5;0" dur="2.5s" begin="0.6s" repeatCount="indefinite" /></circle>
+	 	</g>
+	 </g>
+	</g>
+</svg>
+<h1>The Looking Glass</h1>
+</div>
+<div class="header-actions">
+<button id="openHelpModalBtn" class="btn btn-icon tooltip-trigger" data-tooltip="Help / Info">
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+</button>
+</div>
+</div>
+
+<div class="container">
+{% if not error and not result %}
+<div class="intro-blurb">
+<div class="intro-blurb-icon">
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+	<defs>
+	<linearGradient id="glass-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+	 <stop offset="0%" style="stop-color: var(--accent); stop-opacity: 0.1"/>
+	 <stop offset="100%" style="stop-color: var(--accent); stop-opacity: 0.4"/>
+	</linearGradient>
+	<filter id="glow">
+	 <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+	 <feMerge>
+	 <feMergeNode in="coloredBlur"/>
+	 <feMergeNode in="SourceGraphic"/>
+	 </feMerge>
+	</filter>
+	</defs>
+	<g>
+	<path d="M 50 80 C 50 95, 60 115, 70 118 C 80 115, 90 95, 90 80 L 70 75 Z" fill="#00684A" />
+	<circle cx="70" cy="45" r="38" fill="none" stroke="var(--accent)" stroke-width="4">
+	 <animate attributeName="stroke-dasharray" values="0 238; 238 0" dur="3s" repeatCount="indefinite" transform-origin="center"/>
+	</circle>
+	<circle cx="70" cy="45" r="35" fill="url(#glass-gradient)" />
+	</g>
+	<g fill="var(--text-med)">
+	<circle r="4">
+	 <animateMotion path="M 0 20 C 30 10, 40 60, 70 45" dur="4s" repeatCount="indefinite" />
+	 <animate attributeName="opacity" values="0; 1; 1; 0" dur="4s" repeatCount="indefinite" />
+	</circle>
+	<circle r="3">
+	 <animateMotion path="M 0 80 C 35 90, 40 20, 70 45" dur="4s" begin="1s" repeatCount="indefinite" />
+	 <animate attributeName="opacity" values="0; 1; 1; 0" dur="4s" begin="1s" repeatCount="indefinite" />
+	</circle>
+	<circle r="5">
+	 <animateMotion path="M 20 110 C 40 100, 50 60, 70 45" dur="4s" begin="2.5s" repeatCount="indefinite" />
+	 <animate attributeName="opacity" values="0; 1; 1; 0" dur="4s" begin="2.5s" repeatCount="indefinite" />
+	</circle>
+	</g>
+	<g filter="url(#glow)">
+	<polygon points="70,35 75,44 85,45 77,52 80,62 70,56 60,62 63,52 55,45 65,44" fill="var(--accent)">
+	 <animate attributeName="opacity" values="0; 0; 0; 1; 1; 0" dur="4s" repeatCount="indefinite"/>
+	 <animateTransform attributeName="transform" type="scale" from="0.5" to="1.2" dur="1s" begin="2s" repeatCount="indefinite" additive="sum" transform-origin="70 45"/>
+	</polygon>
+	</g>
+</svg>
+</div>
+<div class="intro-blurb-text">
+<h2>Understand <span style="color:white;font-weight: 300; letter-spacing: 3px;">WHY</span></h2>
+<p>Go beyond simple answers. Provide your documents, define the rules with a guide, and ask your question to receive not just a response, but a transparent, step-by-step explanation of how the AI reached its conclusion.</p>
+<div class="formula">
+	<span class="pill">Your Guide</span> +
+	<span class="pill">Your Docs</span> +
+	<span class="pill">Your Question</span> &rarr;
+	<span class="pill accent">Verifiable Answer</span>
+</div>
+</div>
+</div>
+
+<form method="POST" enctype="multipart/form-data" id="uploadForm">
+<ul class="wizard-tabs" id="wizardTabs">
+<li class="wizard-tab active" data-tab="tabInputs">Step 1: Inputs</li>
+<li class="wizard-tab disabled" data-tab="tabFinalPrompt">Step 2: Final Prompt</li>
+</ul>
+
+<div id="tabInputs" class="wizard-tab-content active">
+<div id="preloadedContextContainer" class="input-group"></div>
+<div class="input-group">
+	<label for="user_question">Your Question</label>
+	<textarea id="user_question" name="user_question" rows="3" required></textarea>
+</div>
+<div class="input-group">
+	<label for="docFilesInput">Document Files (Required)</label>
+	<input type="file" name="document_files" multiple required id="docFilesInput" />
+</div>
+
+<details class="input-group">
+	<summary>Advanced: Add a Guide (Optional)</summary>
+	<div class="guide-content">
+		<div class="input-group">
+			<label for="guideFilesInput">Guide Files</label>
+			<input type="file" name="guide_files" multiple id="guideFilesInput" />
+			<div style="margin-top: 0.75rem;">
+				<button type="button" class="btn btn-secondary btn-small tooltip-trigger" id="checkSimilarGuidesBtn" disabled data-tooltip="Analyzes your guide files and finds similar, previously used guides to avoid redundant work.">Check for Existing Guides</button>
+				<p class="form-note" style="display: inline; margin-left: 0.5rem;">Use an existing guide to speed up analysis.</p>
+			</div>
+		</div>
+		<div id="similarGuidesContainer"></div>
+	</div>
+</details>
+
+	<div class="input-group">
+	<label for="reasoning_effort">Reasoning Effort</label>
+	<select name="reasoning_effort" id="reasoning_effort">
+	 <option value="high" selected>High (Best Quality)</option>
+	 <option value="medium">Medium</option>
+	 <option value="low">Low (Fastest)</option>
+	</select>
+</div>
+<textarea name="optimized_guide_content" id="optimizedGuideTextarea" style="display:none;"></textarea>
+<button type="button" class="btn" id="prepareFinalPromptBtn" disabled>Preview Final Prompt</button>
+</div>
+
+<div id="tabFinalPrompt" class="wizard-tab-content">
+<h3>Final Prompt Review</h3>
+<p class="form-note">Inspect the complete prompt that will be sent for analysis. Use the tabs to focus on specific sections.</p>
+
+<button type="button" class="btn btn-secondary tooltip-trigger" id="findSimilarRequestsBtn" style="margin-bottom: 1.5rem;" data-tooltip="Searches past analyses with similar input documents to find context you can add to this prompt.">Find Similar Analyses</button>
+<div id="similarRequestsContainer"></div>
+
+<div id="augmentedContextContainer" style="display: none; background: var(--accent-dark); border-left: 3px solid var(--accent); padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+	<div id="augmentedContextInfo" style="color: var(--text-med);"></div>
+</div>
+
+<div id="promptReviewer">
+	<ul class="prompt-tabs">
+	 <li class="prompt-tab active" data-target="prompt-full">Full Prompt</li>
+	 <li class="prompt-tab" data-target="prompt-context">Augmented Context</li>
+	 <li class="prompt-tab" data-target="prompt-guide">Guide</li>
+	 <li class="prompt-tab" data-target="prompt-document">Document</li>
+	 <li class="prompt-tab" data-target="prompt-question">Question</li>
+	</ul>
+	<div id="prompt-full" class="prompt-tab-content active">
+	 <pre id="prompt-full-view"></pre>
+	</div>
+	<div id="prompt-context" class="prompt-tab-content">
+	 <pre id="prompt-context-view"></pre>
+	</div>
+	<div id="prompt-guide" class="prompt-tab-content">
+	 <pre id="prompt-guide-view"></pre>
+	</div>
+	<div id="prompt-document" class="prompt-tab-content">
+	 <pre id="prompt-document-view"></pre>
+	</div>
+	<div id="prompt-question" class="prompt-tab-content">
+	 <pre id="prompt-question-view"></pre>
+	</div>
+</div>
+
+<textarea name="final_prompt_text" id="finalPromptTextarea" style="display:none;"></textarea>
+<textarea name="augmented_context" id="augmentedContextTextarea" style="display:none;"></textarea>
+
+<button type="submit" class="btn" id="finalAnalysisBtn">Analyze!</button>
+</div>
+</form>
+{% endif %}
+
+{% if error %}<div class="error"><strong>Error:</strong> {{ error }}</div>{% endif %}
+
+{% if result %}
+<div class="results-container">
+<h2>Results</h2>
+<div style="margin-top: 1rem; background-color: var(--bg-med); border-radius: 8px; padding: 1rem;">
+	<ul class="results-tabs" id="resultsTabs">
+	<li class="tab active" data-tab="tabAnswer">Answer</li>
+	<li class="tab" data-tab="tabChat">Chat</li>
+	<li class="tab" data-tab="tabEval">Evaluation</li>
+	<li class="tab" data-tab="tabGuide2">Submitted Guide</li>
+	<li class="tab" data-tab="tabDocs2">Documents</li>
+	</ul>
+	<div class="results-tab-content active" id="tabAnswer">
+	{% if reasoning_summaries %}
+	<details class="reasoning-spotlight" open>
+	 <summary class="reasoning-toggle">
+	 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+	 <span>My Thought Process</span>
+	 <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+	 </summary>
+	 <div class="reasoning-content">
+	 <div>
+	 	<ol class="reasoning-steps">
+	 	{% for summary in reasoning_summaries %}
+	 	<li class="reasoning-step" style="--i: {{ loop.index0 }};">{{ summary }}</li>
+	 	{% endfor %}
+	 	</ol>
+	 </div>
+	 </div>
+	</details>
+	<button type="button" class="btn btn-secondary btn-small tooltip-trigger" id="findSimilarReasoningBtn" style="margin-bottom: 1.5rem;" data-tooltip="Finds past analyses that used a similar step-by-step thought process.">Find Similar Reasoning</button>
+	<div id="similarReasoningContainer"></div>
+	{% endif %}
+
+	<div class="final-answer-content scrollable-block" style="max-height: 50vh;">
+	 {{ result|safe }}
+	</div>
+	</div>
+	<div class="results-tab-content" id="tabChat" data-request-id="{{ request_id }}">
+	 <div id="chatDebugInfo" style="font-size: 0.8rem; color: var(--text-med); margin-bottom: 0.5rem;"></div>
+	 <div id="chatWindow" class="scrollable-block" style="height: 50vh; display: flex; flex-direction: column; gap: 1rem;"></div>
+
+		<div id="selectedChatContextContainer" style="display: none; padding: 0.75rem 0 0.25rem 0; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;"></div>
+
+		<div id="chatPreviewContainer" style="display: none; margin-bottom: 1rem; margin-top: 0.5rem;">
+			<div id="chatPreviewContent" class="chat-bubble user">
+				</div>
+		</div>
+
+	 <div class="chat-controls" style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+	 	<button class="btn btn-secondary" id="manageChatContextBtn">
+	 	 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+	 	 <span id="manageContextBtnText">Manage Context</span>
+	 	</button>
+	 	<input type="text" id="chatInput" placeholder="Ask a follow-up question..." style="flex-grow: 1;">
+			<button type="button" class="btn btn-secondary" id="previewChatBtn" disabled>Preview</button>
+	 	<button class="btn" id="sendChatBtn">Send</button>
+	 </div>
+	</div>
+	<div class="results-tab-content" id="tabEval">
+	 <div class="intro-blurb" style="margin-bottom: 1.5rem; border-left-width: 3px;">
+	 	<div>
+	 	 <h4>What is Factuality?</h4>
+	 	 <p style="font-size: 0.95rem; line-height: 1.7;">
+	 	 This evaluation measures the AI's consistency and reliability. After your analysis completes, a separate AI process re-runs the same query in the background. It then compares this new answer against the one you originally received.
+	 	 <br><br>
+	 	 A high score (close to 1.0) indicates that the AI produced a factually identical or superset answer, suggesting high reliability for this specific task. A low score indicates contradiction or inconsistency, highlighting areas where the AI's reasoning may be less stable.
+	 	 </p>
+	 	</div>
+	 </div>
+	 <div id="evalResultsContainer">
+	 <p>Evaluation results are pending...</p>
+	 </div>
+	</div>
+	<div class="results-tab-content" id="tabGuide2"><div class="scrollable-block" id="guideContentBlock"></div></div>
+	<div class="results-tab-content" id="tabDocs2"><div class="scrollable-block" id="docContentBlock"></div></div>
+</div>
+</div>
+{% endif %}
+</div>
+
+<div id="loading-modal" class="loading-modal">
+<div class="loading-content">
+	<h3 id="loading-text">Analyzing...</h3>
+	<div class="spinner" style="margin: 1rem auto;"></div>
+</div>
+</div>
+
+<div id="detailsModal" class="modal-backdrop">
+<div class="modal-content">
+	<div class="modal-header">
+	 <h3 id="detailsModalTitle">Details</h3>
+	 <button class="close-btn" id="closeDetailsModal">&times;</button>
+	</div>
+	<div id="detailsModalContent" class="scrollable-block" style="max-height: 60vh;"></div>
+</div>
+</div>
+
+<div id="augmentModal" class="modal-backdrop">
+<div class="modal-content">
+	<div class="modal-header">
+	 <h3 id="augmentModalTitle">Augment Context</h3>
+	 <button class="close-btn" id="closeAugmentModal">&times;</button>
+	</div>
+	<div id="augmentModalContent" class="scrollable-block" style="max-height: 60vh; font-size: 0.9rem;">
+	 </div>
+	<div class="modal-footer" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
+	 	<button type="button" class="btn btn-secondary" id="cancelAugmentBtn">Cancel</button>
+	 	<button type="button" class="btn" id="confirmAugmentBtn">Add This Context</button>
+	</div>
+</div>
+</div>
+
+<div id="helpModal" class="modal-backdrop">
+<div class="modal-content">
+	<div class="modal-header">
+	 <h3>How to Use The Looking Glass</h3>
+	 <button class="close-btn" id="closeHelpModal">&times;</button>
+	</div>
+	<div id="helpModalContent" class="scrollable-block" style="max-height: 70vh;">
+	 <h4>The Core Idea</h4>
+	 <p>This tool is designed to give you verifiable answers from your own documents. It follows a simple formula: <code>Your Guide + Your Docs + Your Question = Verifiable Answer</code>. The AI is forced to base its reasoning only on the materials you provide.</p>
+
+	 <h4>Step 1: Providing Inputs</h4>
+	 <p>This is where you give the AI its context.</p>
+	 <ul>
+	 	<li><strong>Your Question:</strong> The specific question you want answered. Be as clear as possible.</li>
+	 	<li><strong>Document Files:</strong> The source material. This is the information the AI will read to find the answer. It can be text files, PDFs, Word documents, etc.</li>
+	 	<li><strong>Guide Files (Optional):</strong> The rulebook. This tells the AI *how* to interpret the documents. It's an advanced feature collapsed by default. Using a guide can lead to more consistent and accurate answers.</li>
+	 </ul>
+
+	 <h4>Step 2: Final Prompt Review</h4>
+	 <p>After you provide your inputs, you can review the full prompt. Use the <code>Find Similar Analyses</code> button to search for relevant past analyses and add them to your current prompt. By default, a concise summary is added, but you can check the "Add full answer" box to include the entire text.</p>
+
+	 <h4>The Results Page & Chat</h4>
+	 <ul>
+	 	<li><strong>Answer Tab:</strong> Shows the final answer and the AI's step-by-step reasoning. You can find similar reasoning patterns from here to validate the result.</li>
+	 	<li><strong>Chat Tab:</strong> Allows you to ask follow-up questions. Use the <code>Manage Context</code> button to open the search tuner and inject context from past analyses into your current conversation.</li>
+	 	<li><strong>Evaluation Tab:</strong> Shows an automated, AI-powered fact-check of the answer against an expert baseline, providing a score and reasoning for data quality.</li>
+	 </ul>
+	</div>
+</div>
+</div>
+
+<div id="chatContextModal" class="modal-backdrop">
+<div class="modal-content">
+	<div class="modal-header">
+	<h3>Find & Add Context</h3>
+	<button class="close-btn" id="closeChatContextModal">&times;</button>
+	</div>
+	
+	<div class="search-flow-diagram" id="searchFlow">
+		<div class="input-group">
+			 <input type="text" id="chatContextQueryInput" placeholder="Your query flows through two paths...">
+		</div>
+
+		<div class="flow-paths">
+			 <div class="flow-path" id="keywordPath">
+			 	<h4 class="tooltip-trigger" data-tooltip="Matches the exact words and phrases in your query. Good for finding specific terms or error codes.">Keyword Search</h4>
+			 	<p>Matches exact text.</p>
+			 </div>
+			 <div class="flow-path" id="semanticPath">
+			 	<h4 class="tooltip-trigger" data-tooltip="Understands the meaning and intent behind your query, finding conceptually related results even if the words don't match exactly.">Semantic Search</h4>
+			 	<p>Understands intent.</p>
+			 </div>
+		</div>
+
+		<input type="range" id="fusionSlider" min="0" max="100" value="70">
+		<p id="sliderExplanation" class="form-note"></p>
+	</div>
+	<button class="btn" id="executeChatContextSearchBtn" style="width: 100%; margin: 1rem 0;">Search</button>
+	
+	<div id="chatContextSearchResults" class="scrollable-block" style="max-height: 30vh; min-height: 100px;">
+		<p class="form-note" style="text-align: center; padding-top: 1rem;">Search for past analyses to add as context.</p>
+	</div>
+
+	<div class="modal-footer" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
+		<button type="button" class="btn btn-secondary" id="cancelChatContextBtn">Cancel</button>
+		<button type="button" class="btn" id="applyChatContextBtn">Apply Context</button>
+	</div>
+</div>
+</div>
+
+<div id="previewModal" class="modal-backdrop">
+	<div class="modal-content" style="max-width: 800px;">
+		<div class="modal-header">
+			<h3>Message Preview & Payload</h3>
+			<button class="close-btn" id="closePreviewModal">&times;</button>
+		</div>
+
+		<ul class="prompt-tabs" id="previewModalTabs">
+			<li class="prompt-tab active" data-target="preview-visual-tab">Visual Preview</li>
+			<li class="prompt-tab" data-target="preview-payload-tab">Debug Payload</li>
+		</ul>
+
+		<div id="preview-visual-tab" class="prompt-tab-content active" style="padding: 1rem; background: var(--bg-med); border-radius: 0 0 8px 8px; border: 1px solid var(--border-color); border-top: none;">
+			<div id="previewModalVisualContent" class="chat-bubble user" style="align-self: stretch;">
+				</div>
+		</div>
+		<div id="preview-payload-tab" class="prompt-tab-content" style="border-radius: 0 0 8px 8px;">
+			<pre id="previewModalPayloadContent" style="margin-top:0; border-radius: 0 0 8px 8px; max-height: 60vh;"></pre>
+		</div>
+	</div>
+</div>
+
+
+<script>
+// --- STATE MANAGEMENT ---
+let augmentedSnippets = [];
+let selectedForAugmentation = { id: null, content: '', question: '' };
+let chatAugmentSnippets = [];
+const converter = new showdown.Converter({ghCompatibleHeaderId: true, simpleLineBreaks: true});
+
+// --- CHAT HELPER FUNCTIONS ---
+function renderSelectedChatContext() {
+  const container = document.getElementById('selectedChatContextContainer');
+  if (!container) return;
+
+  if (chatAugmentSnippets.length === 0) {
+    container.innerHTML = '';
+    container.style.display = 'none';
+    return;
+  }
+ 
+  container.style.display = 'flex';
+  let html = '<strong style="font-size: 0.9rem; color: var(--text-med);">Context:</strong>';
+  chatAugmentSnippets.forEach((snippet, index) => {
+    html += `
+    <div class="context-pill" style="--i: ${index};">
+      <span class="tooltip-trigger" data-tooltip="${snippet.question.replace(/"/g, '&quot;')}">${snippet.question.substring(0, 30)}...</span>
+      <button type="button" class="remove-chat-context-btn" data-request-id="${snippet.id}" title="Remove context">&times;</button>
+    </div>
+    `;
+  });
+  container.innerHTML = html;
+}
+
+function updateChatPreview() {
+  const previewContainer = document.getElementById('chatPreviewContainer');
+  const previewContent = document.getElementById('chatPreviewContent');
+  const chatInput = document.getElementById('chatInput');
+		const previewBtn = document.getElementById('previewChatBtn');
+  if (!previewContainer || !previewContent || !chatInput) return;
+ 
+  const message = chatInput.value.trim();
+
+  if (message === '') {
+    previewContainer.style.display = 'none';
+				if (previewBtn) previewBtn.disabled = true;
+    return;
+  }
+
+		if (previewBtn) previewBtn.disabled = false;
+
+  let userBubbleHtml = converter.makeHtml(message);
+  if (chatAugmentSnippets.length > 0) {
+    let contextList = chatAugmentSnippets.map(s => `<li><em>"${s.question}"</em></li>`).join('');
+    userBubbleHtml = `
+    <details open style="margin-bottom: 0.75rem;">
+      <summary style="font-size: 0.8rem; color: var(--text-med); cursor: pointer; list-style: none; display:flex; align-items:center;">Including Context (${chatAugmentSnippets.length})</summary>
+      <ul style="font-size: 0.8rem; margin-top: 0.5rem; padding-left: 1.2rem; color: var(--text-med);">${contextList}</ul>
+    </details>
+    ${userBubbleHtml}
+    `;
+  }
+
+  previewContent.innerHTML = userBubbleHtml;
+  previewContainer.style.display = 'block';
+}
+
+
+document.addEventListener("DOMContentLoaded", () => {
+	const uploadForm = document.getElementById("uploadForm");
+	if (uploadForm) {
+	setupWizardForm();
+	checkForPreloadedContext();
+	} else {
+	setupResultsPage();
+	setupChatContextModal();
+		setupPreviewModal();
+	}
+	setupDetailsModal();
+	setupHelpModal();
+	setupAugmentModal();
+	setupPromptReviewer();
+
+	document.body.addEventListener('click', e => {
+		const removeSnippetBtn = e.target.closest('.remove-snippet-btn');
+		const removeChatBtn = e.target.closest('.remove-chat-context-btn');
+
+		if (removeSnippetBtn) {
+			const idToRemove = removeSnippetBtn.dataset.requestId;
+			augmentedSnippets = augmentedSnippets.filter(s => s.id !== idToRemove);
+			renderAugmentedSnippetsUI();
+			renderPreloadedContextOnInputsTab();
+			if (document.getElementById('promptReviewer')?.style.display === 'block') {
+				updateFinalPromptPreview();
+			}
+		}
+
+		if (removeChatBtn) {
+			const snippetId = removeChatBtn.dataset.requestId;
+			chatAugmentSnippets = chatAugmentSnippets.filter(s => s.id !== snippetId);
+			renderSelectedChatContext();
+			updateChatPreview();
+			updateManageContextButton();
+		}
+	});
+});
+
+// --- ASYNC PROMPT PREVIEW UPDATER ---
+async function updateFinalPromptPreview() {
+const btn = document.getElementById('prepareFinalPromptBtn');
+if (!btn) return;
+
+const originalText = btn.textContent;
+btn.disabled = true;
+btn.innerHTML = `<div class="spinner" style="width:20px; height:20px; border-width: 2px; margin-right: 0.5rem; display: inline-block; vertical-align: middle;"></div> Refreshing...`;
+
+try {
+	updateHiddenAugmentTextarea();
+
+	const response = await fetch("/preview_final_prompt", {
+	 method: "POST",
+	 body: new FormData(document.getElementById("uploadForm"))
+	});
+	const data = await response.json();
+	if (!response.ok) throw new Error(data.error || "Unknown server error");
+	
+	document.getElementById('promptReviewer').style.display = 'block';
+	parseAndRenderPrompt(data.prompt);
+} catch (e) {
+	alert(`Error updating final prompt: ${e.message}`);
+} finally {
+	btn.disabled = false;
+	btn.innerHTML = originalText;
+}
+}
+
+// --- AUGMENTATION & CONTEXT LOGIC ---
+function checkForPreloadedContext() {
+const preloadedContext = sessionStorage.getItem('contextForNewAnalysis');
+if (preloadedContext) {
+	try {
+	 augmentedSnippets = JSON.parse(preloadedContext);
+	 renderAugmentedSnippetsUI();
+	 renderPreloadedContextOnInputsTab();
+	} catch(e) {
+	 console.error("Failed to parse preloaded context:", e);
+	 augmentedSnippets = [];
+	}
+	sessionStorage.removeItem('contextForNewAnalysis');
+}
+}
+
+function updateHiddenAugmentTextarea() {
+const finalContent = augmentedSnippets.map(s => s.content).join('\n\n---\n\n');
+document.getElementById('augmentedContextTextarea').value = finalContent;
+}
+
+function renderAugmentedSnippetsUI() {
+const container = document.getElementById('augmentedContextContainer');
+const infoDiv = document.getElementById('augmentedContextInfo');
+if (!container || !infoDiv) return;
+
+if (augmentedSnippets.length === 0) {
+	container.style.display = 'none';
+	infoDiv.innerHTML = '';
+} else {
+	let listHtml = '<strong>Augmented with the following analyses:</strong><ol style="margin-top: 0.5rem; padding-left: 1.2rem; font-size: 0.9rem;">';
+	augmentedSnippets.forEach(snippet => {
+	 listHtml += `<li style="margin-bottom: 0.5rem;"><em>"${snippet.question}"</em> <button type="button" class="btn btn-secondary btn-small remove-snippet-btn" data-request-id="${snippet.id}" style="margin-left: 0.5rem;">Remove</button></li>`;
+	});
+	listHtml += '</ol>';
+	infoDiv.innerHTML = listHtml;
+	container.style.display = 'block';
+}
+updateHiddenAugmentTextarea();
+}
+
+function renderPreloadedContextOnInputsTab() {
+const container = document.getElementById('preloadedContextContainer');
+if (!container) return;
+
+if (augmentedSnippets.length > 0) {
+	const snippet = augmentedSnippets[0];
+	container.innerHTML = `
+	<div style="background: var(--accent-dark); border-left: 3px solid var(--accent); padding: 1rem; border-radius: 6px;">
+	 <p style="margin: 0 0 0.5rem 0; font-weight: 500;">Starting with context from a past analysis:</p>
+	 <div class="chat-context-snippet" style="background: var(--bg-light);">
+	 	<em>"${snippet.question}"</em>
+	 	<button type="button" class="btn btn-secondary btn-small remove-snippet-btn" data-request-id="${snippet.id}">&times;</button>
+	 </div>
+	</div>`;
+} else {
+	container.innerHTML = '';
+}
+}
+
+function updateManageContextButton() {
+const btnText = document.getElementById('manageContextBtnText');
+if (btnText) {
+	if (chatAugmentSnippets.length > 0) {
+	 btnText.textContent = `Context (${chatAugmentSnippets.length})`;
+	} else {
+	 btnText.textContent = 'Manage Context';
+	}
+}
+}
+
+
+function setupAugmentModal() {
+const modal = document.getElementById('augmentModal');
+if (!modal) return;
+const modalTitle = document.getElementById('augmentModalTitle');
+const closeBtn = document.getElementById('closeAugmentModal');
+const cancelBtn = document.getElementById('cancelAugmentBtn');
+const confirmBtn = document.getElementById('confirmAugmentBtn');
+const contentDiv = document.getElementById('augmentModalContent');
+
+const closeModal = () => modal.classList.remove('show');
+const openModal = () => modal.classList.add('show');
+
+[closeBtn, cancelBtn].forEach(btn => btn.addEventListener('click', closeModal));
+modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+confirmBtn.addEventListener('click', () => {
+	const augmentAction = confirmBtn.dataset.action;
+
+	if (augmentAction === 'augment-chat') {
+	 // This action is now handled by the new chat context modal
+	 document.getElementById('manageChatContextBtn')?.click();
+	} else if (augmentAction === 'augment-current') {
+	 const isAlreadyAdded = augmentedSnippets.some(s => s.id === selectedForAugmentation.id);
+	 if (!isAlreadyAdded) {
+	 	augmentedSnippets.push({ ...selectedForAugmentation });
+	 	renderAugmentedSnippetsUI();
+	 	renderPreloadedContextOnInputsTab();
+	 	if (document.getElementById('promptReviewer').style.display === 'block') {
+	 	 updateFinalPromptPreview();
+	 	}
+	 } else {
+	 	alert('This analysis has already been added to the context.');
+	 }
+	}
+	closeModal();
+});
+
+document.body.addEventListener('click', async (e) => {
+	const augmentBtn = e.target.closest('.augment-context-btn');
+	if (!augmentBtn) return;
+	
+	const action = augmentBtn.dataset.action;
+	if (action === 'augment-chat') {
+	 // Open the dedicated modal instead of the generic one.
+	 const chatContextModal = document.getElementById('chatContextModal');
+	 if(chatContextModal) chatContextModal.classList.add('show');
+	 return; // Stop processing in this generic handler
+	}
+	
+	confirmBtn.dataset.action = action;
+	
+	if (action === 'augment-current') {
+	 confirmBtn.textContent = 'Add to Prompt';
+	 modalTitle.textContent = "Augment Current Prompt";
+	}
+	
+	const requestId = augmentBtn.dataset.requestId;
+	if (!requestId) return;
+
+	contentDiv.innerHTML = '<div class="spinner" style="margin: 2rem auto;"></div>';
+	openModal();
+
+	try {
+	 const response = await fetch(`/get_request_details/${requestId}`);
+	 const data = await response.json();
+	 if (!response.ok) throw new Error(data.error || 'Failed to fetch details.');
+
+	 confirmBtn.disabled = false;
+	
+	 // Always include question, thought process, and final answer.
+	 let reasoningText = "No thought process available.";
+	 let reasoningHtml = "<p>No thought process available.</p>";
+	 if (data.reasoning_summaries && data.reasoning_summaries.length > 0) {
+	 	reasoningText = data.reasoning_summaries.map((step, i) => `${i + 1}. ${step}`).join('\n');
+	 	reasoningHtml = '<ol style="padding-left: 1.2rem; margin: 0;">' + data.reasoning_summaries.map(step => `<li>${step}</li>`).join('') + '</ol>';
+	 }
+
+	 let html = `<h4>Past Question</h4><p>${data.user_question}</p>`;
+	 html += `<h4>Thought Process</h4>${reasoningHtml}`;
+	 html += `<h4>Full Answer (to be added)</h4><div class="scrollable-block" style="max-height: 20vh;">${converter.makeHtml(data.final_answer || 'Not available.')}</div>`;
+	 contentDiv.innerHTML = html;
+	
+	 // Construct the content string for the prompt
+	 const formattedContent = `PAST QUESTION: ${data.user_question}\n\nTHOUGHT PROCESS:\n${reasoningText}\n\nFINAL ANSWER:\n${data.final_answer || 'Not available.'}`;
+	 
+	 selectedForAugmentation = {
+	 	id: requestId,
+	 	content: formattedContent.trim(),
+	 	question: data.user_question
+	 };
+
+	} catch (err) {
+	 contentDiv.innerHTML = `<div class="error">${err.message}</div>`;
+	 confirmBtn.disabled = true;
+	}
+});
+}
+
+// --- PROMPT REVIEWER TABS ---
+function setupPromptReviewer() {
+const reviewer = document.getElementById('promptReviewer');
+if (!reviewer) return;
+const tabs = reviewer.querySelectorAll('.prompt-tab');
+const contents = reviewer.querySelectorAll('.prompt-tab-content');
+
+tabs.forEach(tab => {
+	tab.addEventListener('click', () => {
+	 tabs.forEach(t => t.classList.remove('active'));
+	 contents.forEach(c => c.classList.remove('active'));
+	 tab.classList.add('active');
+	 document.getElementById(tab.dataset.target).classList.add('active');
+	});
+});
+}
+
+function parseAndRenderPrompt(fullPrompt) {
+// Always update the hidden textarea for form submission
+document.getElementById('finalPromptTextarea').value = fullPrompt;
+
+const sections = {};
+const regex = /## (AUGMENTED CONTEXT FROM PAST ANALYSIS|GUIDE|DOCUMENT|QUESTION)\n([\s\S]*?)(?=\n\n## |$)/g;
+let match;
+while ((match = regex.exec(fullPrompt)) !== null) {
+	const key = match[1].split(' ')[0].toLowerCase();
+	sections[key] = match[2].trim();
+}
+
+document.getElementById('prompt-full-view').textContent = fullPrompt;
+document.getElementById('prompt-context-view').textContent = sections.augmented || 'No augmented context provided.';
+document.getElementById('prompt-guide-view').textContent = sections.guide || 'No guide provided.';
+document.getElementById('prompt-document-view').textContent = sections.document || 'No document text found.';
+document.getElementById('prompt-question-view').textContent = sections.question || 'No question text found.';
+}
+
+// --- CORE FORM & WIZARD LOGIC ---
+async function readFilesAsText(files) {
+const filePromises = Array.from(files).map(file =>
+	new Promise((resolve, reject) => {
+	 const reader = new FileReader();
+	 reader.onload = event => resolve(event.target.result);
+	 reader.onerror = error => reject(error);
+	 reader.readAsText(file, 'UTF-8');
+	})
+);
+const fileContents = await Promise.all(filePromises);
+return fileContents.join('\n\n---\n\n');
+}
+
+function setupWizardForm() {
+const prepareFinalPromptBtn = document.getElementById("prepareFinalPromptBtn");
+const findSimilarRequestsBtn = document.getElementById("findSimilarRequestsBtn");
+const checkSimilarGuidesBtn = document.getElementById("checkSimilarGuidesBtn");
+const wizardTabs = document.getElementById("wizardTabs");
+const loadingModal = document.getElementById("loading-modal");
+
+const userQuestionInput = document.getElementById("user_question");
+const docFilesInput = document.getElementById("docFilesInput");
+const guideFilesInput = document.getElementById("guideFilesInput");
+
+let loadingInterval;
+const loadingMessages = ["Please wait.", "Please wait..", "Please wait..."];
+
+function showLoading(show = true) {
+	loadingModal.classList.toggle('show', show);
+	if (show) {
+	 let msgIndex = 0;
+	 const loadingText = document.getElementById('loading-text');
+	 loadingText.style.opacity = 1;
+	 loadingText.textContent = loadingMessages[msgIndex];
+	 loadingInterval = setInterval(() => {
+	 	msgIndex = (msgIndex + 1) % loadingMessages.length;
+	 	loadingText.style.opacity = 0;
+	 	setTimeout(() => {
+	 	 loadingText.textContent = loadingMessages[msgIndex];
+	 	 loadingText.style.opacity = 1;
+	 	}, 300);
+	 }, 2000);
+	} else {
+	 clearInterval(loadingInterval);
+	}
+}
+
+function switchTab(targetTabId) {
+	document.querySelectorAll('.wizard-tab').forEach(t => t.classList.remove('active'));
+	document.querySelectorAll('.wizard-tab-content').forEach(c => c.classList.remove('active'));
+	const targetTab = document.querySelector(`.wizard-tab[data-tab="${targetTabId}"]`);
+	if (targetTab) {
+	 targetTab.classList.remove('disabled');
+	 targetTab.classList.add('active');
+	 document.getElementById(targetTabId).classList.add('active');
+	}
+}
+
+wizardTabs.addEventListener('click', (e) => {
+	if (e.target.classList.contains('wizard-tab') && !e.target.classList.contains('disabled')) {
+	 switchTab(e.target.dataset.tab);
+	}
+});
+
+function updateWizardState() {
+	const hasQuestion = userQuestionInput.value.trim() !== '';
+	const hasDocs = docFilesInput.files.length > 0;
+	const hasGuides = guideFilesInput.files.length > 0;
+	prepareFinalPromptBtn.disabled = !(hasQuestion && hasDocs);
+	checkSimilarGuidesBtn.disabled = !hasGuides;
+}
+
+[userQuestionInput, docFilesInput, guideFilesInput].forEach(el => el.addEventListener('input', updateWizardState));
+
+async function findSimilarGuides() {
+	const container = document.getElementById('similarGuidesContainer');
+	container.innerHTML = `<details class="similarity-search-container" id="guides-details"><summary><div class="spinner" style="width:20px;height:20px;border-width:2px;"></div> Searching for similar guides...</summary><div class="similarity-search-content" id="guides-content-target"></div></details>`;
+	const detailsElement = document.getElementById('guides-details');
+	detailsElement.open = true;
+
+	try {
+	 const guideText = await readFilesAsText(guideFilesInput.files);
+	 document.getElementById('optimizedGuideTextarea').value = guideText;
+	 const response = await fetch('/find_similar_guides', {
+	 	method: 'POST',
+	 	headers: {'Content-Type': 'application/json'},
+	 	body: JSON.stringify({ guide_text: guideText })
+	 });
+	 const data = await response.json();
+	 if (!response.ok) throw new Error(data.error || 'Server error');
+
+	 const summary = detailsElement.querySelector('summary');
+	 const contentTarget = document.getElementById('guides-content-target');
+	 if (data.length === 0) {
+	 	summary.innerHTML = ` No similar guides found. Your new guide will be used.`;
+	 	setTimeout(() => { detailsElement.open = false; }, 2000);
+	 } else {
+	 	summary.innerHTML = ` Found similar guides. You can use one of these instead.`;
+	 	let html = '';
+	 	data.forEach((item, index) => {
+	 	 html += `<div class="suggestion-item" style="--i: ${index}"><div class="suggestion-item-header"><strong>Suggestion ${index + 1}</strong><span class="similarity-score">Similarity: ${(item.score || 0).toFixed(3)}<span class="tooltip-trigger" data-tooltip="Cosine similarity score. Higher is more similar."><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span></span></div><pre>${item.original_guide_text}</pre><button type="button" class="btn btn-secondary" onclick="useExistingGuide(this, \`${btoa(encodeURIComponent(item.original_guide_text))}\`)">Use this Guide</button></div>`;
+	 	});
+	 	contentTarget.innerHTML = html;
+	 }
+	} catch (e) {
+	 container.innerHTML = `<div class="error">Error finding guides: ${e.message}</div>`;
+	}
+}
+
+checkSimilarGuidesBtn.addEventListener('click', findSimilarGuides);
+
+findSimilarRequestsBtn.addEventListener('click', async () => {
+	const container = document.getElementById('similarRequestsContainer');
+	container.innerHTML = `<details class="similarity-search-container" id="requests-details"><summary><div class="spinner" style="width:20px;height:20px;border-width:2px;"></div> Searching past analyses with similar inputs...</summary><div class="similarity-search-content" id="requests-content-target"></div></details>`;
+	const detailsElement = document.getElementById('requests-details');
+	detailsElement.open = true;
+
+	try {
+	 const docText = await readFilesAsText(docFilesInput.files);
+	 const response = await fetch('/find_similar_requests', {
+	 	method: 'POST',
+	 	headers: {'Content-Type': 'application/json'},
+	 	body: JSON.stringify({ doc_text: docText })
+	 });
+	 const data = await response.json();
+	 if (!response.ok) throw new Error(data.error || 'Server error');
+
+	 const summary = detailsElement.querySelector('summary');
+	 const contentTarget = document.getElementById('requests-content-target');
+	 if (data.length === 0) {
+	 	summary.innerHTML = ` No similar past analyses found.`;
+	 	setTimeout(() => { detailsElement.open = false; }, 2000);
+	 } else {
+	 	summary.innerHTML = ` Found similar past analyses for your review:`;
+	 	let html = '';
+	 	data.forEach((item, index) => {
+	 	 html += `
+	 	 <details class="similarity-item" style="--i: ${index}">
+	 	 	<summary class="similarity-item-summary">
+	 	 	 <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><strong>Past Question:</strong> ${item.user_question}</span>
+	 	 	 <span class="similarity-score">Similarity: ${(item.score || 0).toFixed(3)}</span>
+	 	 	 <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+	 	 	</summary>
+	 	 	<div class="similarity-item-content">
+	 	 	 <div>
+	 	 	 	<div class="result-card-content" style="margin-top:0;">
+	 	 	 	 <h5 class="tooltip-trigger" data-tooltip="This is an AI-generated summary of the original input documents, redacting sensitive information.">Input Summary</h5>
+	 	 	 	 <p style="font-size:0.9rem; color: var(--text-med); margin:0;">${item.input_summary || 'Not available.'}</p>
+	 	 	 	</div>
+	 	 	 	<div class="similarity-item-actions">
+	 	 	 	 <button type="button" class="btn btn-secondary btn-small view-answer-btn" data-answer="${btoa(encodeURIComponent(item.final_answer || ''))}">Preview Full Answer</button>
+	 	 	 	 <button type="button" class="btn btn-secondary btn-small augment-context-btn" data-request-id="${item._id}" data-action="augment-current" style="margin-left: auto;">Add to Prompt</button>
+	 	 	 	</div>
+	 	 	 </div>
+	 	 	</div>
+	 	 </details>`;
+	 	});
+	 	contentTarget.innerHTML = html;
+	 }
+	} catch(e) {
+	 container.innerHTML = `<div class="error">Error finding requests: ${e.message}</div>`;
+	}
+});
+
+prepareFinalPromptBtn.addEventListener('click', async () => {
+	showLoading(true);
+	const guideTextarea = document.getElementById('optimizedGuideTextarea');
+	if (guideFilesInput.files.length > 0 && !guideTextarea.value) {
+	 guideTextarea.value = await readFilesAsText(guideFilesInput.files);
+	}
+	await updateFinalPromptPreview();
+	switchTab('tabFinalPrompt');
+	showLoading(false);
+});
+
+document.getElementById("uploadForm").addEventListener('submit', (e) => {
+	const finalPromptText = document.getElementById('finalPromptTextarea').value;
+	if (!finalPromptText) {
+	 alert('Please preview the final prompt before analyzing.');
+	 e.preventDefault();
+	 return;
+	}
+	showLoading(true);
+});
+}
+
+window.useExistingGuide = (button, base64GuideText) => {
+try {
+const guideText = decodeURIComponent(atob(base64GuideText));
+document.getElementById('optimizedGuideTextarea').value = guideText;
+document.getElementById('guideFilesInput').value = '';
+document.querySelectorAll('#similarGuidesContainer .btn').forEach(btn => {
+	btn.innerText = 'Use this Guide';
+	btn.classList.remove('btn-secondary');
+});
+button.innerText = ' Selected';
+button.classList.add('btn-secondary');
+const guideInputGroup = document.getElementById('guideFilesInput').parentElement;
+if (!guideInputGroup.querySelector('.selection-note')) {
+	const note = document.createElement('p');
+	note.className = 'form-note selection-note';
+	note.innerHTML = 'Using selected guide. To upload a new file, please refresh.';
+	guideInputGroup.appendChild(note);
+}
+} catch(e) {
+	console.error("Error decoding guide text:", e);
+	alert("Could not use the selected guide due to a decoding error.");
+}
+}
+
+// --- RESULTS PAGE & MODALS ---
+function setupResultsPage() {
+const guideText = {{ guide_text|default("")|tojson|safe }};
+const docText = {{ doc_text|default("")|tojson|safe }};
+const requestId = {{ request_id|default('null')|tojson }};
+
+if (document.getElementById("guideContentBlock")) {
+	document.getElementById("guideContentBlock").innerHTML = converter.makeHtml(guideText);
+}
+if (document.getElementById("docContentBlock")) {
+	document.getElementById("docContentBlock").innerHTML = converter.makeHtml(docText);
+}
+
+const resultsTabs = document.getElementById("resultsTabs");
+if (resultsTabs) {
+	 resultsTabs.addEventListener("click", (e) => {
+	 	const tab = e.target.closest('.tab');
+	 	if(tab) {
+	 	 document.querySelector('.results-tabs .tab.active')?.classList.remove('active');
+	 	 document.querySelector('.results-tab-content.active')?.classList.remove('active');
+	 	 tab.classList.add('active');
+	 	 document.getElementById(tab.dataset.tab).classList.add('active');
+	 	}
+	 });
+}
+
+const chatWindow = document.getElementById('chatWindow');
+const chatInput = document.getElementById('chatInput');
+const sendChatBtn = document.getElementById('sendChatBtn');
+
+renderSelectedChatContext(); // Initially hide/show the context container
+
+document.getElementById('manageChatContextBtn')?.addEventListener('click', () => {
+	document.getElementById('chatContextModal')?.classList.add('show');
+});
+
+
+function appendBubble(html, who, summaries = []) {
+	const bubble = document.createElement('div');
+	bubble.classList.add('chat-bubble', who.split(' ')[0]);
+	if (who.includes('ai-typing')) bubble.classList.add('ai-typing');
+
+	if (who.startsWith('ai') && summaries && summaries.length > 0) {
+	 let reasoningHtml = `<details class="reasoning-spotlight" style="margin-bottom: 0.5rem; background: rgba(0,0,0,0.2);"><summary class="reasoning-toggle" style="padding: 0.5rem; font-size: 0.9rem;"><span>Show Reasoning</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="chevron" style="margin-left:auto;"><polyline points="6 9 12 15 18 9"></polyline></svg></summary><div class="reasoning-content"><div><ol class="reasoning-steps" style="padding: 0.5rem 1rem 1rem 2rem;">`;
+	 summaries.forEach((summary, index) => {
+	 	reasoningHtml += `<li class="reasoning-step" style="--i: ${index}; font-size: 0.9rem;">${summary.replace(/</g, "&lt;")}</li>`;
+	 });
+	 reasoningHtml += `</ol></div></div></details>`;
+	 bubble.innerHTML = reasoningHtml;
+	}
+	const contentDiv = document.createElement('div');
+	contentDiv.innerHTML = html;
+	bubble.appendChild(contentDiv);
+	chatWindow.appendChild(bubble);
+	chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
+async function sendChat() {
+		const message = chatInput.value.trim();
+		if (!message || !requestId) return;
+
+		const previewContent = document.getElementById('chatPreviewContent');
+		const userBubbleHtml = previewContent.innerHTML;
+		
+		appendBubble(userBubbleHtml, 'user');
+		
+		chatInput.value = '';
+		updateChatPreview(); // This will hide the preview and disable the preview button
+		chatInput.disabled = true;
+		sendChatBtn.disabled = true;
+		appendBubble('<em>Typing...</em>', 'ai ai-typing');
+		
+		const augmentedContent = chatAugmentSnippets.map(s => s.content).join('\n\n---\n\n');
+		const payload = {
+			request_id: requestId,
+			user_message: message, // Send the raw text message
+			augmented_chat_context: augmentedContent
+		};
+		
+		// Clear context after it has been sent
+		chatAugmentSnippets = [];
+		updateManageContextButton();
+		renderSelectedChatContext();
+
+	try {
+	 const response = await fetch('/chat', {
+	 	method: 'POST',
+	 	headers: {'Content-Type': 'application/json'},
+	 	body: JSON.stringify(payload)
+	 });
+	 document.querySelector('.ai-typing')?.remove();
+	 const data = await response.json();
+	 if (!response.ok) throw new Error(data.error || 'Unknown chat error');
+
+	 appendBubble(data.reply, 'ai', data.summaries || []);
+
+	 const debugInfoDiv = document.getElementById('chatDebugInfo');
+	 if (data.conversation_id && debugInfoDiv && !debugInfoDiv.innerText) {
+	 	debugInfoDiv.innerText = `Traceability -- Request ID: ${requestId} | Conversation ID: ${data.conversation_id}`;
+	 }
+	} catch (e) {
+	 document.querySelector('.ai-typing')?.remove();
+	 appendBubble(`<div class="error" style="background:transparent; border:none; padding:0;"><strong>Error:</strong> ${e.message}</div>`, 'ai');
+	} finally {
+	 chatInput.disabled = false;
+	 sendChatBtn.disabled = false;
+	 chatInput.focus();
+	}
+}
+if(sendChatBtn) sendChatBtn.addEventListener('click', sendChat);
+if(chatInput) {
+		chatInput.addEventListener('keydown', (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } });
+		chatInput.addEventListener('input', updateChatPreview);
+	}
+
+const findSimilarReasoningBtn = document.getElementById('findSimilarReasoningBtn');
+if (findSimilarReasoningBtn) {
+	findSimilarReasoningBtn.addEventListener('click', async () => {
+	 const container = document.getElementById('similarReasoningContainer');
+	 container.innerHTML = `<details class="similarity-search-container" id="reasoning-details"><summary><div class="spinner" style="width:20px;height:20px;border-width:2px;"></div> Searching for similar reasoning patterns...</summary><div class="similarity-search-content" id="reasoning-content-target"></div></details>`;
+	 const detailsElement = document.getElementById('reasoning-details');
+	 detailsElement.open = true;
+
+	 try {
+	 	const response = await fetch('/find_similar_reasoning', {
+	 	 method: 'POST',
+	 	 headers: {'Content-Type': 'application/json'},
+	 	 body: JSON.stringify({ request_id: requestId })
+	 	});
+	 	const data = await response.json();
+	 	if (!response.ok) throw new Error(data.error || 'Server error');
+
+	 	const summary = detailsElement.querySelector('summary');
+	 	const contentTarget = document.getElementById('reasoning-content-target');
+	 	if (data.length === 0) {
+	 	 summary.innerHTML = ` No similar reasoning patterns found.`;
+	 	 setTimeout(() => { detailsElement.open = false; }, 2000);
+	 	} else {
+	 	 summary.innerHTML = ` Found past analyses with similar reasoning:`;
+	 	 let html = '';
+	 	 data.forEach((item, index) => {
+	 	 	html += `
+	 	 	<details class="similarity-item" style="--i: ${index}">
+	 	 	 <summary class="similarity-item-summary">
+	 	 	 	<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><strong>Past Question:</strong> ${item.user_question}</span>
+	 	 	 	<span class="similarity-score">
+	 	 	 	 Similarity: ${(item.score || 0).toFixed(3)}
+	 	 	 	</span>
+	 	 	 	<svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+	 	 	 </summary>
+	 	 	 <div class="similarity-item-content">
+	 	 	 	<div>
+	 	 	 	 <div class="result-card-content" style="margin-top:0;">
+	 	 	 	 	<h5>Reasoning Steps</h5>
+	 	 	 	 	<ol style="font-size: 0.9rem; padding-left: 1.5rem; margin:0;">`;
+	 	 	 	(item.reasoning_summaries || []).forEach(step => { html += `<li>${step}</li>`; });
+	 	 	 	html += `</ol></div>
+	 	 	 	 <div class="result-card-content">
+	 	     	<h5>Input Summary</h5>
+	 	 	 	 	<p style="font-size:0.9rem; color: var(--text-med); margin:0;">${item.input_summary || 'Not available.'}</p>
+	 	 	 	 </div>
+	 	 	 	 <div class="similarity-item-actions">
+	 	 	 	 	<button class="btn btn-secondary btn-small view-answer-btn" data-answer="${btoa(encodeURIComponent(item.final_answer || ''))}">Preview Full Answer</button>
+	 	 	 	 </div>
+	     	</div>
+	 	 	 </div>
+	 	 	</details>`;
+	 	 });
+	 	 contentTarget.innerHTML = html;
+	 	}
+	 } catch(e) {
+	 	container.innerHTML = `<div class="error" style="margin:0;">Error finding reasoning: ${e.message}</div>`;
+	 }
+	});
+}
+
+const evalTabContent = document.getElementById("evalResultsContainer");
+if (requestId && evalTabContent) {
+	let attempts = 0;
+	const pollInterval = setInterval(async () => {
+	 if (++attempts > 40) { clearInterval(pollInterval); evalTabContent.innerHTML = "<p>Evaluation timed out after 2 minutes.</p>"; return; }
+	 try {
+	 	const response = await fetch(`/get_evaluation_results/${requestId}`);
+	 	if (response.status === 200) {
+	 	 clearInterval(pollInterval);
+	 	 const data = await response.json();
+	 	 let resultsHtml = `<h3>Evaluation Complete</h3><p><strong>Choice:</strong> ${data.factuality_evaluation_choice || 'N/A'} (Score: ${data.factuality_evaluation_score || 0.0})</p><p><strong>Reason:</strong> ${data.factuality_evaluation_reason || 'No reason provided.'}</p><hr><h4>Submitted Answer (for this evaluation)</h4><pre>${data.submitted_answer || 'N/A'}</pre><h4>Expert Answer (from initial run)</h4><pre>${data.expert_answer || 'N/A'}</pre>`;
+	 	 evalTabContent.innerHTML = resultsHtml.replace(/<pre>/g, '<pre style="white-space:pre-wrap; background: var(--bg-med); padding: 0.5rem; border-radius: 4px;">');
+	 	} else if (response.status !== 202) {
+	 	 clearInterval(pollInterval);
+	 	 evalTabContent.innerHTML = `<p>Error fetching results: Status ${response.status}</p>`;
+	 	}
+	 } catch (error) {
+	 	clearInterval(pollInterval);
+	 	evalTabContent.innerHTML = "<p>A client-side error occurred while polling for evaluation results.</p>";
+	 }
+	}, 3000);
+}
+}
+
+function setupDetailsModal() {
+const modal = document.getElementById('detailsModal');
+const title = document.getElementById('detailsModalTitle');
+const content = document.getElementById('detailsModalContent');
+const closeBtn = document.getElementById('closeDetailsModal');
+
+document.body.addEventListener('click', (e) => {
+	const answerBtn = e.target.closest('.view-answer-btn');
+	const summaryBtn = e.target.closest('.view-summary-btn');
+
+	if (answerBtn) {
+	 const answerData = decodeURIComponent(atob(answerBtn.dataset.answer));
+	 title.textContent = "Full Answer";
+	 content.innerHTML = converter.makeHtml(answerData);
+	 modal.classList.add('show');
+	}
+	if (summaryBtn) {
+	 const summaryData = decodeURIComponent(atob(summaryBtn.dataset.summary));
+	 title.textContent = "Input Summary";
+	 content.innerHTML = `<p>${summaryData.replace(/\n/g, '<br>')}</p>`;
+	 modal.classList.add('show');
+	}
+});
+
+const closeModal = () => modal.classList.remove('show');
+if(closeBtn) closeBtn.addEventListener('click', closeModal);
+if(modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+}
+
+function setupHelpModal() {
+const modal = document.getElementById('helpModal');
+const openBtn = document.getElementById('openHelpModalBtn');
+const closeBtn = document.getElementById('closeHelpModal');
+
+const openModal = () => modal.classList.add('show');
+const closeModal = () => modal.classList.remove('show');
+
+if(openBtn) openBtn.addEventListener('click', openModal);
+if(closeBtn) closeBtn.addEventListener('click', closeModal);
+if(modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+}
+
+function setupPreviewModal() {
+	const modal = document.getElementById('previewModal');
+	if (!modal) return;
+
+	const openBtn = document.getElementById('previewChatBtn');
+	const closeBtn = document.getElementById('closePreviewModal');
+	const tabs = modal.querySelectorAll('.prompt-tab');
+	const contents = modal.querySelectorAll('.prompt-tab-content');
+	const visualContentDiv = document.getElementById('previewModalVisualContent');
+	const payloadContentPre = document.getElementById('previewModalPayloadContent');
+	const previewSource = document.getElementById('chatPreviewContent');
+	const chatInput = document.getElementById('chatInput');
+
+	const openModal = () => {
+		if (!previewSource || !visualContentDiv || !payloadContentPre || !chatInput) return;
+		const chatTab = document.getElementById('tabChat');
+		const requestId = chatTab ? chatTab.dataset.requestId : null;
+
+		// 1. Populate Visual Tab
+		visualContentDiv.innerHTML = previewSource.innerHTML;
+
+		// 2. Populate Payload/Debug Tab
+		const payload = {
+			request_id: requestId,
+			user_message: chatInput.value.trim(),
+			augmented_chat_context: chatAugmentSnippets.map(s => s.content).join('\n\n---\n\n')
+		};
+		payloadContentPre.textContent = JSON.stringify(payload, null, 2);
+
+		// 3. Show Modal
+		modal.classList.add('show');
+	};
+
+	const closeModal = () => modal.classList.remove('show');
+
+	if (openBtn) openBtn.addEventListener('click', openModal);
+	if (closeBtn) closeBtn.addEventListener('click', closeModal);
+	modal.addEventListener('click', (e) => {
+		if (e.target === modal) closeModal();
+	});
+
+	// Add tab switching logic for the modal
+	tabs.forEach(tab => {
+		tab.addEventListener('click', () => {
+			tabs.forEach(t => t.classList.remove('active'));
+			contents.forEach(c => c.classList.remove('active'));
+			tab.classList.add('active');
+			modal.querySelector(`#${tab.dataset.target}`).classList.add('active');
+		});
+	});
+}
+
+function setupChatContextModal() {
+const modal = document.getElementById('chatContextModal');
+if (!modal) return;
+
+const closeBtn = document.getElementById('closeChatContextModal');
+const cancelBtn = document.getElementById('cancelChatContextBtn');
+const applyBtn = document.getElementById('applyChatContextBtn');
+const searchBtn = document.getElementById('executeChatContextSearchBtn');
+const queryInput = document.getElementById('chatContextQueryInput');
+const resultsContainer = document.getElementById('chatContextSearchResults');
+
+// Hybrid search tuner elements now inside this modal
+const slider = document.getElementById('fusionSlider');
+const explanation = document.getElementById('sliderExplanation');
+const searchFlow = document.getElementById('searchFlow');
+
+let stagedSnippets = [];
+let searchResults = [];
+
+const openModal = () => {
+	stagedSnippets = [...chatAugmentSnippets];
+	// If results already exist from a previous search in this session, update their checkboxes
+	if (resultsContainer.children.length > 1 && resultsContainer.querySelector('label')) {
+		updateCheckboxes();
+	}
+	modal.classList.add('show');
+};
+const closeModal = () => modal.classList.remove('show');
+
+document.getElementById('manageChatContextBtn')?.addEventListener('click', openModal);
+[closeBtn, cancelBtn].forEach(btn => btn?.addEventListener('click', closeModal));
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+applyBtn?.addEventListener('click', () => {
+	chatAugmentSnippets = [...stagedSnippets];
+	updateManageContextButton();
+		renderSelectedChatContext();
+		updateChatPreview();
+	closeModal();
+});
+
+function updateCheckboxes() {
+	resultsContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+		checkbox.checked = stagedSnippets.some(s => s.id === checkbox.value);
+	});
+}
+
+resultsContainer.addEventListener('change', e => {
+	if (e.target.type === 'checkbox') {
+	 const snippetId = e.target.value;
+	 if (e.target.checked) {
+	 	const snippetToAdd = searchResults.find(r => r._id === snippetId);
+	 	if (snippetToAdd && !stagedSnippets.some(s => s.id === snippetId)) {
+	 	 let formattedContent = `PAST QUESTION: ${snippetToAdd.user_question}\n\nINPUT SUMMARY:\n${snippetToAdd.input_summary}\n\nFINAL ANSWER:\n${snippetToAdd.final_answer}`;
+	 	 stagedSnippets.push({ id: snippetId, question: snippetToAdd.user_question, content: formattedContent });
+	 	}
+	 } else {
+	 	stagedSnippets = stagedSnippets.filter(s => s.id !== snippetId);
+	 }
+	}
+});
+
+async function executeSearch() {
+	const query = queryInput.value.trim();
+	resultsContainer.innerHTML = `<div style="display:flex; justify-content:center; padding: 2rem 0;"><div class="spinner"></div></div>`;
+	
+	const vectorWeight = slider.value / 100;
+	const textWeight = 1 - vectorWeight;
+	
+	try {
+	 const response = await fetch('/hybrid_search', {
+	 	method: 'POST',
+	 	headers: {'Content-Type': 'application/json'},
+	 	body: JSON.stringify({
+	 		query: query || '',
+	 		weights: { vectorPipeline: vectorWeight, fullTextPipeline: textWeight }
+	 	})
+	 });
+	 const data = await response.json();
+	 if (!response.ok) throw new Error(data.error || 'Server error');
+	
+	 searchResults = data; // Store results to get full data later
+	 if (data.length === 0) {
+	 	resultsContainer.innerHTML = `<p class="form-note" style="text-align: center; padding-top: 1rem;">No results found.</p>`;
+	 	return;
+	 }
+	
+	 let html = '';
+	 data.forEach(item => {
+	 	html += `
+	 	<label class="context-search-result">
+	 	 <input type="checkbox" value="${item._id}">
+	 	 <div class="context-search-result-text">
+	 	 	<strong>${item.user_question}</strong>
+	 	 	<small>${(item.input_summary || '').substring(0, 100)}...</small>
+	 	 </div>
+	 	 <span class="similarity-score" style="margin-left:auto;">${(item.scoreDetails.value || 0).toFixed(2)}</span>
+	 	</label>
+	 	`;
+	 });
+	 resultsContainer.innerHTML = html;
+	 updateCheckboxes();
+	} catch (e) {
+	 resultsContainer.innerHTML = `<div class="error" style="margin:0;">${e.message}</div>`;
+	}
+}
+
+const updateSearchUI = () => {
+	if(!slider || !searchFlow || !explanation) return;
+	const value = slider.value;
+	const semanticWeight = value / 100;
+	const keywordWeight = 1 - semanticWeight;
+
+	searchFlow.style.setProperty('--semantic-weight', semanticWeight);
+	searchFlow.style.setProperty('--keyword-weight', keywordWeight);
+
+	let text = "A balanced search for keywords and context.";
+	if (value < 20) text = "Focuses on finding the exact words you typed.";
+	else if (value < 45) text = "Leaning towards keyword precision.";
+	else if (value > 80) text = "Focuses on understanding concepts and meaning.";
+	else if (value > 55) text = "Leaning towards semantic understanding.";
+
+	if (explanation.textContent !== text) {
+	 explanation.style.opacity = 0;
+	 setTimeout(() => { explanation.textContent = text; explanation.style.opacity = 1; }, 150);
+	}
+};
+
+searchBtn?.addEventListener('click', executeSearch);
+queryInput?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); executeSearch(); }});
+slider?.addEventListener('input', updateSearchUI);
+updateSearchUI(); // Initialize slider UI on load
+}
+
+</script>
+</body>
+</html>
