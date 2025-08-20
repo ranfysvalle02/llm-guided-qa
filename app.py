@@ -18,7 +18,7 @@ import logging
 import markdown
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 import ray
 from dotenv import load_dotenv
@@ -51,11 +51,12 @@ subscription_key = os.getenv("AZURE_OPENAI_API_KEY")
 endpoint = os.getenv("AZURE_OPENAI_ENDPOINT", "")
 deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT", "o4-mini")
 api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2025-04-01-preview")
-embedding_deployment = os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT", "text-embedding-3-small")
+# Force the embedding deployment to use text-embedding-3-small
+embedding_deployment = "text-embedding-3-small"
 
 logging.info(f"AZURE_OPENAI_ENDPOINT: '{endpoint}'")
 logging.info(f"AZURE_OPENAI_DEPLOYMENT: '{deployment}'")
-logging.info(f"AZURE_OPENAI_EMBEDDING_DEPLOYMENT: '{embedding_deployment}'")
+logging.info(f"AZURE_OPENAI_EMBEDDING_DEPLOYMENT: '{embedding_deployment}' (Hardcoded)")
 logging.info(f"AZURE_OPENAI_API_VERSION: '{api_version}'")
 
 if not subscription_key:
@@ -373,7 +374,7 @@ def run_evaluation_parallel(
     Connects to services using provided credentials and writes to the specified DB collection.
     """
     logging.info(f"Ray worker started for evaluation of request_id: {request_id}")
-    results = {"request_id": request_id, "timestamp": datetime.utcnow(), "factuality_evaluation_reason": "Evaluation task failed."}
+    results = {"request_id": request_id, "timestamp": datetime.now(timezone.utc), "factuality_evaluation_reason": "Evaluation task failed."}
     try:
         if not all([azure_key, azure_endpoint, azure_api_version, azure_deployment]):
             raise ValueError("Missing Azure OpenAI credentials for Ray worker.")
@@ -475,7 +476,7 @@ def index():
                         logging.info("✅ Successfully generated reasoning summary embedding.")
 
                     req_log_entry = {
-                        "timestamp": datetime.utcnow(), "user_question": user_question, "final_answer": reasoned_result["answer"],
+                        "timestamp": datetime.now(timezone.utc), "user_question": user_question, "final_answer": reasoned_result["answer"],
                         "input_summary": input_summary,
                         "doc_text": doc_text, "original_guide_text": original_guide_text,
                         "optimized_guide_submitted": optimized_guide_content, "final_prompt_submitted": final_prompt_to_use,
@@ -489,16 +490,28 @@ def index():
 
                     insert_result = requests_collection.insert_one(req_log_entry)
                     request_id = str(insert_result.inserted_id)
-                    conversations_collection.insert_one({"request_id": request_id, "created_at": datetime.utcnow(), "history": []})
+                    conversations_collection.insert_one({"request_id": request_id, "created_at": datetime.now(timezone.utc), "history": []})
                     
-                    # FIX: Compare db and collection objects with `is not None`
-                    if db is not None and evaluations_collection is not None:
+                    # FINAL FIX: Use explicit 'is not None' checks for database objects, as they do not support truth value testing.
+                    can_evaluate = all([
+                        db is not None,
+                        evaluations_collection is not None,
+                        subscription_key,
+                        endpoint,
+                        api_version,
+                        deployment,
+                        mongo_uri
+                    ])
+
+                    if can_evaluate:
                         logging.info(f"Dispatching evaluation task for request_id: {request_id}")
                         run_evaluation_parallel.remote(
                             request_id, optimized_guide_content, doc_text, user_question, reasoned_result["answer"], 
                             subscription_key, endpoint, api_version, deployment, mongo_uri,
                             db.name, evaluations_collection.name
                         )
+                    else:
+                        logging.warning(f"Skipping evaluation for request_id: {request_id} due to missing configuration (DB, Azure credentials, etc.).")
 
                 result_data = {
                     "guide_text": optimized_guide_content, "doc_text": doc_text, "user_question": user_question, 
