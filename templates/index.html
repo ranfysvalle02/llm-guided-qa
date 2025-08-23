@@ -42,12 +42,19 @@ display: flex; justify-content: space-between; align-items: center;
 }
 .branding { display: flex; align-items: center; gap: 1rem; }
 .header-actions { display: flex; align-items: center; gap: 1rem; }
+
+@keyframes containerFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 .container {
 margin: 9rem auto 2rem auto; max-width: 1200px;
 width: 90%; background-color: var(--bg-light);
 padding: 2rem; border-radius: 8px;
 box-shadow: 0 8px 32px rgba(0,0,0,0.5);
 border: 1px solid var(--border-color);
+opacity: 0;
+animation: containerFadeIn 0.8s ease-out 0.2s forwards;
 }
 .btn {
 background-color: var(--accent); color: var(--accent-dark);
@@ -66,7 +73,24 @@ border-radius: 50%; display: flex; justify-content: center; align-items: center;
 padding: 0; border: 1px solid var(--border-color);
 }
 .btn-icon:hover { background-color: var(--bg-light); color: var(--text-light); }
-
+.btn.loading {
+    pointer-events: none;
+    position: relative;
+    color: transparent !important; /* Hide original text */
+}
+.btn.loading::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 1.2rem;
+    height: 1.2rem;
+    border: 2px solid var(--accent-dark);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
 
 h1, h2, h3 { margin: 0; }
 h2 { color: var(--accent); margin-bottom: 0.5rem; font-weight: 700; }
@@ -294,10 +318,11 @@ border: 1px solid var(--border-color);
 box-shadow: 0 8px 32px rgba(0,0,0,0.6);
 width: 90%; max-width: 700px;
 position: relative;
-transform: translateY(20px);
-transition: transform 0.3s ease;
+transform: translateY(20px) scale(0.95);
+transition: transform 0.3s ease, opacity 0.3s ease;
+opacity: 0;
 }
-.modal-backdrop.show .modal-content { transform: translateY(0); }
+.modal-backdrop.show .modal-content { transform: translateY(0) scale(1); opacity: 1;}
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
 .modal-header h3 { color: var(--accent); }
 .close-btn { background: none; border: none; color: var(--text-med); font-size: 1.5rem; cursor: pointer; transition: color 0.2s; }
@@ -372,7 +397,8 @@ color: var(--accent);
 }
 
 /* --- PROMPT REVIEW TABS --- */
-#promptReviewer { display: none; margin-top: 1rem; }
+#promptReviewer { transition: opacity 0.3s ease-in-out; }
+#promptReviewer.loading { opacity: 0.6; pointer-events: none; }
 .prompt-tabs {
 display: flex; list-style: none; margin: 0; padding: 0;
 border-bottom: 1px solid var(--border-color);
@@ -380,6 +406,8 @@ border-bottom: 1px solid var(--border-color);
 .prompt-tab {
 padding: 0.5rem 1rem; cursor: pointer; color: var(--text-med);
 border-radius: 6px 6px 0 0;
+display: flex;
+align-items: center;
 }
 .prompt-tab.active {
 background-color: var(--bg-med);
@@ -420,66 +448,73 @@ color: var(--text-med);
 
 /* --- NEW: Chat UI Enhancements --- */
 .context-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: var(--bg-deep);
-  color: var(--text-med);
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.85rem;
-  border: 1px solid var(--border-color);
-  animation: stepFadeInUp 0.4s ease-out forwards;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--bg-deep);
+  color: var(--text-med);
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.85rem;
+  border: 1px solid var(--border-color);
+  animation: stepFadeInUp 0.4s ease-out forwards;
 }
 .context-pill button {
-  background: none;
-  border: none;
-  color: var(--text-med);
-  cursor: pointer;
-  padding: 0;
-  font-size: 1rem;
-  line-height: 1;
-  transition: color 0.2s;
+  background: none;
+  border: none;
+  color: var(--text-med);
+  cursor: pointer;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+  transition: color 0.2s;
 }
 .context-pill button:hover {
-  color: var(--text-light);
+  color: var(--text-light);
 }
 
+@keyframes bubbleFadeIn {
+    from { opacity: 0; transform: translateY(15px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.chat-bubble.new {
+    animation: bubbleFadeIn 0.4s ease-out forwards;
+}
 .chat-bubble {
-  padding: 0.75rem 1rem;
-  border-radius: 12px;
-  max-width: 85%;
-  line-height: 1.6;
-  word-wrap: break-word;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  max-width: 85%;
+  line-height: 1.6;
+  word-wrap: break-word;
 }
 .chat-bubble.user {
-  background-color: var(--accent-dark);
-  color: var(--text-light);
-  align-self: flex-end;
-  border-bottom-right-radius: 2px;
+  background-color: var(--accent-dark);
+  color: var(--text-light);
+  align-self: flex-end;
+  border-bottom-right-radius: 2px;
 }
 .chat-bubble.ai {
-  background-color: var(--bg-med);
-  align-self: flex-start;
-  border-bottom-left-radius: 2px;
+  background-color: var(--bg-med);
+  align-self: flex-start;
+  border-bottom-left-radius: 2px;
 }
 .chat-bubble.ai-typing {
-  font-style: italic;
-  color: var(--text-med);
+  font-style: italic;
+  color: var(--text-med);
 }
 .chat-bubble details {
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  padding: 0.5rem;
-  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 0.5rem;
+  background: rgba(0,0,0,0.2);
 }
 .chat-bubble details summary {
-  font-weight: 500;
+  font-weight: 500;
 }
 #chatPreviewContent {
-  background-color: rgba(0, 237, 100, 0.05);
-  border: 1px solid rgba(0, 237, 100, 0.2);
-  align-self: stretch; /* Make it full width */
+  background-color: rgba(0, 237, 100, 0.05);
+  border: 1px solid rgba(0, 237, 100, 0.2);
+  align-self: stretch; /* Make it full width */
 }
 
 
@@ -679,7 +714,11 @@ color: var(--text-med);
 
 <div id="tabFinalPrompt" class="wizard-tab-content">
 <h3>Final Prompt Review</h3>
-<p class="form-note">Inspect the complete prompt that will be sent for analysis. Use the tabs to focus on specific sections.</p>
+<p class="form-note">Inspect and refine the components of the complete prompt. The preview will auto-update after you save changes.</p>
+
+<div style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+    <button type="button" class="btn btn-secondary" id="openSystemPromptModalBtn">Tune System Prompt (Persona & Instructions)</button>
+</div>
 
 <button type="button" class="btn btn-secondary tooltip-trigger" id="findSimilarRequestsBtn" style="margin-bottom: 1.5rem;" data-tooltip="Searches past analyses with similar input documents to find context you can add to this prompt.">Find Similar Analyses</button>
 <div id="similarRequestsContainer"></div>
@@ -690,7 +729,7 @@ color: var(--text-med);
 
 <div id="promptReviewer">
 	<ul class="prompt-tabs">
-	 <li class="prompt-tab active" data-target="prompt-full">Full Prompt</li>
+	 <li class="prompt-tab active" data-target="prompt-full">Full Prompt <div class="spinner" id="preview-spinner" style="display:none; width:16px; height:16px; border-width:2px; margin-left: 8px;"></div></li>
 	 <li class="prompt-tab" data-target="prompt-context">Augmented Context</li>
 	 <li class="prompt-tab" data-target="prompt-guide">Guide</li>
 	 <li class="prompt-tab" data-target="prompt-document">Document</li>
@@ -713,6 +752,7 @@ color: var(--text-med);
 	</div>
 </div>
 
+<textarea name="system_prompt" id="systemPromptTextarea" style="display:none;">{{ system_prompt_default|safe }}</textarea>
 <textarea name="final_prompt_text" id="finalPromptTextarea" style="display:none;"></textarea>
 <textarea name="augmented_context" id="augmentedContextTextarea" style="display:none;"></textarea>
 
@@ -854,7 +894,7 @@ color: var(--text-med);
 	 </ul>
 
 	 <h4>Step 2: Final Prompt Review</h4>
-	 <p>After you provide your inputs, you can review the full prompt. Use the <code>Find Similar Analyses</code> button to search for relevant past analyses and add them to your current prompt. By default, a concise summary is added, but you can check the "Add full answer" box to include the entire text.</p>
+	 <p>After you provide your inputs, you can review the full prompt. Use the <strong>"Tune System Prompt"</strong> button to open a modal and edit the AI's core instructions. When you save your changes, the prompt preview will automatically update. You can also use the <code>Find Similar Analyses</code> button to add context from past work, which will also trigger a preview refresh.</p>
 
 	 <h4>The Results Page & Chat</h4>
 	 <ul>
@@ -864,6 +904,23 @@ color: var(--text-med);
 	 </ul>
 	</div>
 </div>
+</div>
+
+<div id="systemPromptModal" class="modal-backdrop">
+    <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+            <h3>Tune System Prompt</h3>
+            <button class="close-btn" id="closeSystemPromptModal">&times;</button>
+        </div>
+        <div class="input-group">
+            <label for="modalSystemPromptTextarea">AI Persona & Core Instructions</label>
+            <textarea id="modalSystemPromptTextarea" rows="10"></textarea>
+        </div>
+        <div class="modal-footer" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
+            <button type="button" class="btn btn-secondary" id="cancelSystemPromptBtn">Cancel</button>
+            <button type="button" class="btn" id="saveSystemPromptBtn">Save Changes</button>
+        </div>
+    </div>
 </div>
 
 <div id="chatContextModal" class="modal-backdrop">
@@ -930,77 +987,124 @@ color: var(--text-med);
 
 <script>
 // --- STATE MANAGEMENT ---
+let currentSystemPrompt = '';
 let augmentedSnippets = [];
 let selectedForAugmentation = { id: null, content: '', question: '' };
 let chatAugmentSnippets = [];
 const converter = new showdown.Converter({ghCompatibleHeaderId: true, simpleLineBreaks: true});
 
+// --- UTILITIES ---
+function debounce(func, delay) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
 // --- CHAT HELPER FUNCTIONS ---
 function renderSelectedChatContext() {
-  const container = document.getElementById('selectedChatContextContainer');
-  if (!container) return;
+  const container = document.getElementById('selectedChatContextContainer');
+  if (!container) return;
 
-  if (chatAugmentSnippets.length === 0) {
-    container.innerHTML = '';
-    container.style.display = 'none';
-    return;
-  }
- 
-  container.style.display = 'flex';
-  let html = '<strong style="font-size: 0.9rem; color: var(--text-med);">Context:</strong>';
-  chatAugmentSnippets.forEach((snippet, index) => {
-    html += `
-    <div class="context-pill" style="--i: ${index};">
-      <span class="tooltip-trigger" data-tooltip="${snippet.question.replace(/"/g, '&quot;')}">${snippet.question.substring(0, 30)}...</span>
-      <button type="button" class="remove-chat-context-btn" data-request-id="${snippet.id}" title="Remove context">&times;</button>
-    </div>
-    `;
-  });
-  container.innerHTML = html;
+  if (chatAugmentSnippets.length === 0) {
+    container.innerHTML = '';
+    container.style.display = 'none';
+    return;
+  }
+ 
+  container.style.display = 'flex';
+  let html = '<strong style="font-size: 0.9rem; color: var(--text-med);">Context:</strong>';
+  chatAugmentSnippets.forEach((snippet, index) => {
+    html += `
+    <div class="context-pill" style="--i: ${index};">
+      <span class="tooltip-trigger" data-tooltip="${snippet.question.replace(/"/g, '&quot;')}">${snippet.question.substring(0, 30)}...</span>
+      <button type="button" class="remove-chat-context-btn" data-request-id="${snippet.id}" title="Remove context">&times;</button>
+    </div>
+    `;
+  });
+  container.innerHTML = html;
 }
 
 function updateChatPreview() {
-  const previewContainer = document.getElementById('chatPreviewContainer');
-  const previewContent = document.getElementById('chatPreviewContent');
-  const chatInput = document.getElementById('chatInput');
+  const previewContainer = document.getElementById('chatPreviewContainer');
+  const previewContent = document.getElementById('chatPreviewContent');
+  const chatInput = document.getElementById('chatInput');
 		const previewBtn = document.getElementById('previewChatBtn');
-  if (!previewContainer || !previewContent || !chatInput) return;
- 
-  const message = chatInput.value.trim();
+  if (!previewContainer || !previewContent || !chatInput) return;
+ 
+  const message = chatInput.value.trim();
 
-  if (message === '') {
-    previewContainer.style.display = 'none';
+  if (message === '') {
+    previewContainer.style.display = 'none';
 				if (previewBtn) previewBtn.disabled = true;
-    return;
-  }
+    return;
+  }
 
 		if (previewBtn) previewBtn.disabled = false;
 
-  let userBubbleHtml = converter.makeHtml(message);
-  if (chatAugmentSnippets.length > 0) {
-    let contextList = chatAugmentSnippets.map(s => `<li><em>"${s.question}"</em></li>`).join('');
-    userBubbleHtml = `
-    <details open style="margin-bottom: 0.75rem;">
-      <summary style="font-size: 0.8rem; color: var(--text-med); cursor: pointer; list-style: none; display:flex; align-items:center;">Including Context (${chatAugmentSnippets.length})</summary>
-      <ul style="font-size: 0.8rem; margin-top: 0.5rem; padding-left: 1.2rem; color: var(--text-med);">${contextList}</ul>
-    </details>
-    ${userBubbleHtml}
-    `;
-  }
+  let userBubbleHtml = converter.makeHtml(message);
+  if (chatAugmentSnippets.length > 0) {
+    let contextList = chatAugmentSnippets.map(s => `<li><em>"${s.question}"</em></li>`).join('');
+    userBubbleHtml = `
+    <details open style="margin-bottom: 0.75rem;">
+      <summary style="font-size: 0.8rem; color: var(--text-med); cursor: pointer; list-style: none; display:flex; align-items:center;">Including Context (${chatAugmentSnippets.length})</summary>
+      <ul style="font-size: 0.8rem; margin-top: 0.5rem; padding-left: 1.2rem; color: var(--text-med);">${contextList}</ul>
+    </details>
+    ${userBubbleHtml}
+    `;
+  }
 
-  previewContent.innerHTML = userBubbleHtml;
-  previewContainer.style.display = 'block';
+  previewContent.innerHTML = userBubbleHtml;
+  previewContainer.style.display = 'block';
 }
+
+// --- ASYNC PROMPT PREVIEW UPDATER ---
+let isPreviewUpdating = false;
+async function updateFinalPromptPreview() {
+    if (isPreviewUpdating) return;
+    isPreviewUpdating = true;
+
+    const spinner = document.getElementById('preview-spinner');
+    const reviewer = document.getElementById('promptReviewer');
+    const finalAnalysisBtn = document.getElementById('finalAnalysisBtn');
+
+    if (spinner) spinner.style.display = 'inline-block';
+    if (reviewer) reviewer.classList.add('loading');
+    if (finalAnalysisBtn) finalAnalysisBtn.disabled = true;
+
+	try {
+		updateHiddenAugmentTextarea();
+		const response = await fetch("/preview_final_prompt", {
+			method: "POST",
+			body: new FormData(document.getElementById("uploadForm"))
+		});
+		const data = await response.json();
+		if (!response.ok) throw new Error(data.error || "Unknown server error");
+		
+		document.getElementById('promptReviewer').style.display = 'block';
+		parseAndRenderPrompt(data.prompt);
+	} catch (e) {
+		alert(`Error updating final prompt: ${e.message}`);
+	} finally {
+        if (spinner) spinner.style.display = 'none';
+        if (reviewer) reviewer.classList.remove('loading');
+        if (finalAnalysisBtn) finalAnalysisBtn.disabled = false;
+        isPreviewUpdating = false;
+	}
+}
+const debouncedUpdatePreview = debounce(updateFinalPromptPreview, 750);
 
 
 document.addEventListener("DOMContentLoaded", () => {
 	const uploadForm = document.getElementById("uploadForm");
 	if (uploadForm) {
-	setupWizardForm();
-	checkForPreloadedContext();
+	    setupWizardForm();
+	    checkForPreloadedContext();
+        setupSystemPromptModal();
 	} else {
-	setupResultsPage();
-	setupChatContextModal();
+	    setupResultsPage();
+	    setupChatContextModal();
 		setupPreviewModal();
 	}
 	setupDetailsModal();
@@ -1008,18 +1112,18 @@ document.addEventListener("DOMContentLoaded", () => {
 	setupAugmentModal();
 	setupPromptReviewer();
 
-	document.body.addEventListener('click', e => {
+    // --- CENTRALIZED BODY CLICK HANDLER ---
+	document.body.addEventListener('click', async (e) => {
 		const removeSnippetBtn = e.target.closest('.remove-snippet-btn');
 		const removeChatBtn = e.target.closest('.remove-chat-context-btn');
+        const augmentBtn = e.target.closest('.augment-context-btn');
 
 		if (removeSnippetBtn) {
 			const idToRemove = removeSnippetBtn.dataset.requestId;
 			augmentedSnippets = augmentedSnippets.filter(s => s.id !== idToRemove);
 			renderAugmentedSnippetsUI();
 			renderPreloadedContextOnInputsTab();
-			if (document.getElementById('promptReviewer')?.style.display === 'block') {
-				updateFinalPromptPreview();
-			}
+            debouncedUpdatePreview();
 		}
 
 		if (removeChatBtn) {
@@ -1029,37 +1133,12 @@ document.addEventListener("DOMContentLoaded", () => {
 			updateChatPreview();
 			updateManageContextButton();
 		}
+
+        if (augmentBtn) {
+            handleAugmentButtonClick(augmentBtn);
+        }
 	});
 });
-
-// --- ASYNC PROMPT PREVIEW UPDATER ---
-async function updateFinalPromptPreview() {
-const btn = document.getElementById('prepareFinalPromptBtn');
-if (!btn) return;
-
-const originalText = btn.textContent;
-btn.disabled = true;
-btn.innerHTML = `<div class="spinner" style="width:20px; height:20px; border-width: 2px; margin-right: 0.5rem; display: inline-block; vertical-align: middle;"></div> Refreshing...`;
-
-try {
-	updateHiddenAugmentTextarea();
-
-	const response = await fetch("/preview_final_prompt", {
-	 method: "POST",
-	 body: new FormData(document.getElementById("uploadForm"))
-	});
-	const data = await response.json();
-	if (!response.ok) throw new Error(data.error || "Unknown server error");
-	
-	document.getElementById('promptReviewer').style.display = 'block';
-	parseAndRenderPrompt(data.prompt);
-} catch (e) {
-	alert(`Error updating final prompt: ${e.message}`);
-} finally {
-	btn.disabled = false;
-	btn.innerHTML = originalText;
-}
-}
 
 // --- AUGMENTATION & CONTEXT LOGIC ---
 function checkForPreloadedContext() {
@@ -1132,103 +1211,89 @@ if (btnText) {
 }
 }
 
+async function handleAugmentButtonClick(augmentBtn) {
+    const modal = document.getElementById('augmentModal');
+    const contentDiv = document.getElementById('augmentModalContent');
+    const confirmBtn = document.getElementById('confirmAugmentBtn');
+    const modalTitle = document.getElementById('augmentModalTitle');
 
-function setupAugmentModal() {
-const modal = document.getElementById('augmentModal');
-if (!modal) return;
-const modalTitle = document.getElementById('augmentModalTitle');
-const closeBtn = document.getElementById('closeAugmentModal');
-const cancelBtn = document.getElementById('cancelAugmentBtn');
-const confirmBtn = document.getElementById('confirmAugmentBtn');
-const contentDiv = document.getElementById('augmentModalContent');
-
-const closeModal = () => modal.classList.remove('show');
-const openModal = () => modal.classList.add('show');
-
-[closeBtn, cancelBtn].forEach(btn => btn.addEventListener('click', closeModal));
-modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-
-confirmBtn.addEventListener('click', () => {
-	const augmentAction = confirmBtn.dataset.action;
-
-	if (augmentAction === 'augment-chat') {
-	 // This action is now handled by the new chat context modal
-	 document.getElementById('manageChatContextBtn')?.click();
-	} else if (augmentAction === 'augment-current') {
-	 const isAlreadyAdded = augmentedSnippets.some(s => s.id === selectedForAugmentation.id);
-	 if (!isAlreadyAdded) {
-	 	augmentedSnippets.push({ ...selectedForAugmentation });
-	 	renderAugmentedSnippetsUI();
-	 	renderPreloadedContextOnInputsTab();
-	 	if (document.getElementById('promptReviewer').style.display === 'block') {
-	 	 updateFinalPromptPreview();
-	 	}
-	 } else {
-	 	alert('This analysis has already been added to the context.');
-	 }
-	}
-	closeModal();
-});
-
-document.body.addEventListener('click', async (e) => {
-	const augmentBtn = e.target.closest('.augment-context-btn');
-	if (!augmentBtn) return;
-	
-	const action = augmentBtn.dataset.action;
+    const action = augmentBtn.dataset.action;
 	if (action === 'augment-chat') {
-	 // Open the dedicated modal instead of the generic one.
-	 const chatContextModal = document.getElementById('chatContextModal');
-	 if(chatContextModal) chatContextModal.classList.add('show');
-	 return; // Stop processing in this generic handler
+	    document.getElementById('chatContextModal')?.classList.add('show');
+	    return;
 	}
 	
 	confirmBtn.dataset.action = action;
-	
 	if (action === 'augment-current') {
-	 confirmBtn.textContent = 'Add to Prompt';
-	 modalTitle.textContent = "Augment Current Prompt";
+	    confirmBtn.textContent = 'Add to Prompt';
+	    modalTitle.textContent = "Augment Current Prompt";
 	}
 	
 	const requestId = augmentBtn.dataset.requestId;
 	if (!requestId) return;
 
 	contentDiv.innerHTML = '<div class="spinner" style="margin: 2rem auto;"></div>';
-	openModal();
+	modal.classList.add('show');
 
 	try {
-	 const response = await fetch(`/get_request_details/${requestId}`);
-	 const data = await response.json();
-	 if (!response.ok) throw new Error(data.error || 'Failed to fetch details.');
+	    const response = await fetch(`/get_request_details/${requestId}`);
+	    const data = await response.json();
+	    if (!response.ok) throw new Error(data.error || 'Failed to fetch details.');
 
-	 confirmBtn.disabled = false;
+	    confirmBtn.disabled = false;
 	
-	 // Always include question, thought process, and final answer.
-	 let reasoningText = "No thought process available.";
-	 let reasoningHtml = "<p>No thought process available.</p>";
-	 if (data.reasoning_summaries && data.reasoning_summaries.length > 0) {
-	 	reasoningText = data.reasoning_summaries.map((step, i) => `${i + 1}. ${step}`).join('\n');
-	 	reasoningHtml = '<ol style="padding-left: 1.2rem; margin: 0;">' + data.reasoning_summaries.map(step => `<li>${step}</li>`).join('') + '</ol>';
-	 }
+	    let reasoningText = "No thought process available.";
+	    let reasoningHtml = "<p>No thought process available.</p>";
+	    if (data.reasoning_summaries && data.reasoning_summaries.length > 0) {
+	 	    reasoningText = data.reasoning_summaries.map((step, i) => `${i + 1}. ${step}`).join('\n');
+	 	    reasoningHtml = '<ol style="padding-left: 1.2rem; margin: 0;">' + data.reasoning_summaries.map(step => `<li>${step}</li>`).join('') + '</ol>';
+	    }
 
-	 let html = `<h4>Past Question</h4><p>${data.user_question}</p>`;
-	 html += `<h4>Thought Process</h4>${reasoningHtml}`;
-	 html += `<h4>Full Answer (to be added)</h4><div class="scrollable-block" style="max-height: 20vh;">${converter.makeHtml(data.final_answer || 'Not available.')}</div>`;
-	 contentDiv.innerHTML = html;
+	    let html = `<h4>Past Question</h4><p>${data.user_question}</p>`;
+	    html += `<h4>Thought Process</h4>${reasoningHtml}`;
+	    html += `<h4>Full Answer (to be added)</h4><div class="scrollable-block" style="max-height: 20vh;">${converter.makeHtml(data.final_answer || 'Not available.')}</div>`;
+	    contentDiv.innerHTML = html;
 	
-	 // Construct the content string for the prompt
-	 const formattedContent = `PAST QUESTION: ${data.user_question}\n\nTHOUGHT PROCESS:\n${reasoningText}\n\nFINAL ANSWER:\n${data.final_answer || 'Not available.'}`;
-	 
-	 selectedForAugmentation = {
-	 	id: requestId,
-	 	content: formattedContent.trim(),
-	 	question: data.user_question
-	 };
-
+	    const formattedContent = `PAST QUESTION: ${data.user_question}\n\nTHOUGHT PROCESS:\n${reasoningText}\n\nFINAL ANSWER:\n${data.final_answer || 'Not available.'}`;
+	 
+	    selectedForAugmentation = {
+	 	    id: requestId,
+	 	    content: formattedContent.trim(),
+	 	    question: data.user_question
+	    };
 	} catch (err) {
-	 contentDiv.innerHTML = `<div class="error">${err.message}</div>`;
-	 confirmBtn.disabled = true;
+	    contentDiv.innerHTML = `<div class="error">${err.message}</div>`;
+	    confirmBtn.disabled = true;
 	}
-});
+}
+
+function setupAugmentModal() {
+    const modal = document.getElementById('augmentModal');
+    if (!modal) return;
+    const closeBtn = document.getElementById('closeAugmentModal');
+    const cancelBtn = document.getElementById('cancelAugmentBtn');
+    const confirmBtn = document.getElementById('confirmAugmentBtn');
+
+    const closeModal = () => modal.classList.remove('show');
+
+    [closeBtn, cancelBtn].forEach(btn => btn.addEventListener('click', closeModal));
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+    confirmBtn.addEventListener('click', () => {
+	    const augmentAction = confirmBtn.dataset.action;
+	    if (augmentAction === 'augment-current') {
+	        const isAlreadyAdded = augmentedSnippets.some(s => s.id === selectedForAugmentation.id);
+	        if (!isAlreadyAdded && selectedForAugmentation.id) {
+	 	        augmentedSnippets.push({ ...selectedForAugmentation });
+	 	        renderAugmentedSnippetsUI();
+	 	        renderPreloadedContextOnInputsTab();
+                debouncedUpdatePreview();
+	        } else if(isAlreadyAdded) {
+	 	        alert('This analysis has already been added to the context.');
+	        }
+	    }
+	    closeModal();
+    });
 }
 
 // --- PROMPT REVIEWER TABS ---
@@ -1282,177 +1347,218 @@ return fileContents.join('\n\n---\n\n');
 }
 
 function setupWizardForm() {
-const prepareFinalPromptBtn = document.getElementById("prepareFinalPromptBtn");
-const findSimilarRequestsBtn = document.getElementById("findSimilarRequestsBtn");
-const checkSimilarGuidesBtn = document.getElementById("checkSimilarGuidesBtn");
-const wizardTabs = document.getElementById("wizardTabs");
-const loadingModal = document.getElementById("loading-modal");
+    const prepareFinalPromptBtn = document.getElementById("prepareFinalPromptBtn");
+    const findSimilarRequestsBtn = document.getElementById("findSimilarRequestsBtn");
+    const checkSimilarGuidesBtn = document.getElementById("checkSimilarGuidesBtn");
+    const wizardTabs = document.getElementById("wizardTabs");
+    const loadingModal = document.getElementById("loading-modal");
+    const userQuestionInput = document.getElementById("user_question");
+    const docFilesInput = document.getElementById("docFilesInput");
+    const guideFilesInput = document.getElementById("guideFilesInput");
 
-const userQuestionInput = document.getElementById("user_question");
-const docFilesInput = document.getElementById("docFilesInput");
-const guideFilesInput = document.getElementById("guideFilesInput");
+    let loadingInterval;
+    const loadingMessages = ["Please wait.", "Please wait..", "Please wait..."];
 
-let loadingInterval;
-const loadingMessages = ["Please wait.", "Please wait..", "Please wait..."];
+    function showLoading(show = true) {
+	    loadingModal.classList.toggle('show', show);
+	    if (show) {
+	        let msgIndex = 0;
+	        const loadingText = document.getElementById('loading-text');
+	        loadingText.style.opacity = 1;
+	        loadingText.textContent = loadingMessages[msgIndex];
+	        loadingInterval = setInterval(() => {
+	 	        msgIndex = (msgIndex + 1) % loadingMessages.length;
+	 	        loadingText.style.opacity = 0;
+	 	        setTimeout(() => {
+	 	            loadingText.textContent = loadingMessages[msgIndex];
+	 	            loadingText.style.opacity = 1;
+	 	        }, 300);
+	        }, 2000);
+	    } else {
+	        clearInterval(loadingInterval);
+	    }
+    }
 
-function showLoading(show = true) {
-	loadingModal.classList.toggle('show', show);
-	if (show) {
-	 let msgIndex = 0;
-	 const loadingText = document.getElementById('loading-text');
-	 loadingText.style.opacity = 1;
-	 loadingText.textContent = loadingMessages[msgIndex];
-	 loadingInterval = setInterval(() => {
-	 	msgIndex = (msgIndex + 1) % loadingMessages.length;
-	 	loadingText.style.opacity = 0;
-	 	setTimeout(() => {
-	 	 loadingText.textContent = loadingMessages[msgIndex];
-	 	 loadingText.style.opacity = 1;
-	 	}, 300);
-	 }, 2000);
-	} else {
-	 clearInterval(loadingInterval);
-	}
+    function switchTab(targetTabId) {
+	    document.querySelectorAll('.wizard-tab').forEach(t => t.classList.remove('active'));
+	    document.querySelectorAll('.wizard-tab-content').forEach(c => c.classList.remove('active'));
+	    const targetTab = document.querySelector(`.wizard-tab[data-tab="${targetTabId}"]`);
+	    if (targetTab) {
+	        targetTab.classList.remove('disabled');
+	        targetTab.classList.add('active');
+	        document.getElementById(targetTabId).classList.add('active');
+	    }
+    }
+
+    wizardTabs.addEventListener('click', (e) => {
+	    if (e.target.classList.contains('wizard-tab') && !e.target.classList.contains('disabled')) {
+	        switchTab(e.target.dataset.tab);
+	    }
+    });
+
+    function updateWizardState() {
+	    const hasQuestion = userQuestionInput.value.trim() !== '';
+	    const hasDocs = docFilesInput.files.length > 0;
+	    const hasGuides = guideFilesInput.files.length > 0;
+	    prepareFinalPromptBtn.disabled = !(hasQuestion && hasDocs);
+	    checkSimilarGuidesBtn.disabled = !hasGuides;
+    }
+
+    [userQuestionInput, docFilesInput, guideFilesInput].forEach(el => el.addEventListener('input', updateWizardState));
+    
+    async function findSimilarGuides() {
+	    const container = document.getElementById('similarGuidesContainer');
+	    container.innerHTML = `<details class="similarity-search-container" id="guides-details"><summary><div class="spinner" style="width:20px;height:20px;border-width:2px;"></div> Searching for similar guides...</summary><div class="similarity-search-content" id="guides-content-target"></div></details>`;
+	    const detailsElement = document.getElementById('guides-details');
+	    detailsElement.open = true;
+
+	    try {
+	        const guideText = await readFilesAsText(guideFilesInput.files);
+	        document.getElementById('optimizedGuideTextarea').value = guideText;
+	        const response = await fetch('/find_similar_guides', {
+	 	        method: 'POST',
+	 	        headers: {'Content-Type': 'application/json'},
+	 	        body: JSON.stringify({ guide_text: guideText })
+	        });
+	        const data = await response.json();
+	        if (!response.ok) throw new Error(data.error || 'Server error');
+
+	        const summary = detailsElement.querySelector('summary');
+	        const contentTarget = document.getElementById('guides-content-target');
+	        if (data.length === 0) {
+	 	        summary.innerHTML = ` No similar guides found. Your new guide will be used.`;
+	 	        setTimeout(() => { detailsElement.open = false; }, 2000);
+	        } else {
+	 	        summary.innerHTML = ` Found similar guides. You can use one of these instead.`;
+	 	        let html = '';
+	 	        data.forEach((item, index) => {
+	 	            html += `<div class="suggestion-item" style="--i: ${index}"><div class="suggestion-item-header"><strong>Suggestion ${index + 1}</strong><span class="similarity-score">Similarity: ${(item.score || 0).toFixed(3)}<span class="tooltip-trigger" data-tooltip="Cosine similarity score. Higher is more similar."><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span></span></div><pre>${item.original_guide_text}</pre><button type="button" class="btn btn-secondary" onclick="useExistingGuide(this, \`${btoa(encodeURIComponent(item.original_guide_text))}\`)">Use this Guide</button></div>`;
+	 	        });
+	 	        contentTarget.innerHTML = html;
+	        }
+	    } catch (e) {
+	        container.innerHTML = `<div class="error">Error finding guides: ${e.message}</div>`;
+	    }
+    }
+
+    checkSimilarGuidesBtn.addEventListener('click', findSimilarGuides);
+
+    findSimilarRequestsBtn.addEventListener('click', async () => {
+	    const container = document.getElementById('similarRequestsContainer');
+	    container.innerHTML = `<details class="similarity-search-container" id="requests-details"><summary><div class="spinner" style="width:20px;height:20px;border-width:2px;"></div> Searching past analyses with similar inputs...</summary><div class="similarity-search-content" id="requests-content-target"></div></details>`;
+	    const detailsElement = document.getElementById('requests-details');
+	    detailsElement.open = true;
+
+	    try {
+	        const docText = await readFilesAsText(docFilesInput.files);
+	        const response = await fetch('/find_similar_requests', {
+	 	        method: 'POST',
+	 	        headers: {'Content-Type': 'application/json'},
+	 	        body: JSON.stringify({ doc_text: docText })
+	        });
+	        const data = await response.json();
+	        if (!response.ok) throw new Error(data.error || 'Server error');
+
+	        const summary = detailsElement.querySelector('summary');
+	        const contentTarget = document.getElementById('requests-content-target');
+	        if (data.length === 0) {
+	 	        summary.innerHTML = ` No similar past analyses found.`;
+	 	        setTimeout(() => { detailsElement.open = false; }, 2000);
+	        } else {
+	 	        summary.innerHTML = ` Found similar past analyses for your review:`;
+	 	        let html = '';
+	 	        data.forEach((item, index) => {
+	 	            html += `
+	 	            <details class="similarity-item" style="--i: ${index}">
+	 	 	            <summary class="similarity-item-summary">
+	 	 	                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><strong>Past Question:</strong> ${item.user_question}</span>
+	 	 	                <span class="similarity-score">Similarity: ${(item.score || 0).toFixed(3)}</span>
+	 	 	                <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+	 	 	            </summary>
+	 	 	            <div class="similarity-item-content">
+	 	 	                <div>
+	 	 	 	                <div class="result-card-content" style="margin-top:0;">
+	 	 	 	                    <h5 class="tooltip-trigger" data-tooltip="This is an AI-generated summary of the original input documents, redacting sensitive information.">Input Summary</h5>
+	 	 	 	                    <p style="font-size:0.9rem; color: var(--text-med); margin:0;">${item.input_summary || 'Not available.'}</p>
+	 	 	 	                </div>
+	 	 	 	                <div class="similarity-item-actions">
+	 	 	 	                    <button type="button" class="btn btn-secondary btn-small view-answer-btn" data-answer="${btoa(encodeURIComponent(item.final_answer || ''))}">Preview Full Answer</button>
+	 	 	 	                    <button type="button" class="btn btn-secondary btn-small augment-context-btn" data-request-id="${item._id}" data-action="augment-current" style="margin-left: auto;">Add to Prompt</button>
+	 	 	 	                </div>
+	 	 	                </div>
+	 	 	            </div>
+	 	            </details>`;
+	 	        });
+	 	        contentTarget.innerHTML = html;
+	        }
+	    } catch(e) {
+	        container.innerHTML = `<div class="error">Error finding requests: ${e.message}</div>`;
+	    }
+    });
+
+    prepareFinalPromptBtn.addEventListener('click', async () => {
+        showLoading(true);
+        const guideTextarea = document.getElementById('optimizedGuideTextarea');
+        if (guideFilesInput.files.length > 0 && !guideTextarea.value) {
+            guideTextarea.value = await readFilesAsText(guideFilesInput.files);
+        }
+        await updateFinalPromptPreview();
+        switchTab('tabFinalPrompt');
+        showLoading(false);
+    });
+
+    document.getElementById("uploadForm").addEventListener('submit', (e) => {
+	    if (isPreviewUpdating) {
+            alert("Please wait for the prompt preview to finish updating before analyzing.");
+            e.preventDefault();
+            return;
+        }
+        const finalPromptText = document.getElementById('finalPromptTextarea').value;
+	    if (!finalPromptText) {
+	        alert('Please go to Step 2 to generate and review the final prompt before analyzing.');
+	        e.preventDefault();
+	        return;
+	    }
+	    showLoading(true);
+    });
 }
 
-function switchTab(targetTabId) {
-	document.querySelectorAll('.wizard-tab').forEach(t => t.classList.remove('active'));
-	document.querySelectorAll('.wizard-tab-content').forEach(c => c.classList.remove('active'));
-	const targetTab = document.querySelector(`.wizard-tab[data-tab="${targetTabId}"]`);
-	if (targetTab) {
-	 targetTab.classList.remove('disabled');
-	 targetTab.classList.add('active');
-	 document.getElementById(targetTabId).classList.add('active');
-	}
+function setupSystemPromptModal() {
+    const modal = document.getElementById('systemPromptModal');
+    if (!modal) return;
+
+    const openBtn = document.getElementById('openSystemPromptModalBtn');
+    const closeBtn = document.getElementById('closeSystemPromptModal');
+    const cancelBtn = document.getElementById('cancelSystemPromptBtn');
+    const saveBtn = document.getElementById('saveSystemPromptBtn');
+    const modalTextarea = document.getElementById('modalSystemPromptTextarea');
+    const hiddenFormTextarea = document.getElementById('systemPromptTextarea');
+
+    currentSystemPrompt = hiddenFormTextarea.value;
+    
+    const openModal = () => {
+        modalTextarea.value = currentSystemPrompt;
+        modal.classList.add('show');
+    }
+    const closeModal = () => modal.classList.remove('show');
+
+    openBtn.addEventListener('click', openModal);
+    [closeBtn, cancelBtn].forEach(btn => btn.addEventListener('click', closeModal));
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+    saveBtn.addEventListener('click', async () => {
+        const newPrompt = modalTextarea.value;
+        currentSystemPrompt = newPrompt;
+        hiddenFormTextarea.value = newPrompt;
+        
+        saveBtn.classList.add('loading');
+        await updateFinalPromptPreview(); // Wait for the preview to finish
+        saveBtn.classList.remove('loading');
+        
+        closeModal();
+    });
 }
 
-wizardTabs.addEventListener('click', (e) => {
-	if (e.target.classList.contains('wizard-tab') && !e.target.classList.contains('disabled')) {
-	 switchTab(e.target.dataset.tab);
-	}
-});
-
-function updateWizardState() {
-	const hasQuestion = userQuestionInput.value.trim() !== '';
-	const hasDocs = docFilesInput.files.length > 0;
-	const hasGuides = guideFilesInput.files.length > 0;
-	prepareFinalPromptBtn.disabled = !(hasQuestion && hasDocs);
-	checkSimilarGuidesBtn.disabled = !hasGuides;
-}
-
-[userQuestionInput, docFilesInput, guideFilesInput].forEach(el => el.addEventListener('input', updateWizardState));
-
-async function findSimilarGuides() {
-	const container = document.getElementById('similarGuidesContainer');
-	container.innerHTML = `<details class="similarity-search-container" id="guides-details"><summary><div class="spinner" style="width:20px;height:20px;border-width:2px;"></div> Searching for similar guides...</summary><div class="similarity-search-content" id="guides-content-target"></div></details>`;
-	const detailsElement = document.getElementById('guides-details');
-	detailsElement.open = true;
-
-	try {
-	 const guideText = await readFilesAsText(guideFilesInput.files);
-	 document.getElementById('optimizedGuideTextarea').value = guideText;
-	 const response = await fetch('/find_similar_guides', {
-	 	method: 'POST',
-	 	headers: {'Content-Type': 'application/json'},
-	 	body: JSON.stringify({ guide_text: guideText })
-	 });
-	 const data = await response.json();
-	 if (!response.ok) throw new Error(data.error || 'Server error');
-
-	 const summary = detailsElement.querySelector('summary');
-	 const contentTarget = document.getElementById('guides-content-target');
-	 if (data.length === 0) {
-	 	summary.innerHTML = ` No similar guides found. Your new guide will be used.`;
-	 	setTimeout(() => { detailsElement.open = false; }, 2000);
-	 } else {
-	 	summary.innerHTML = ` Found similar guides. You can use one of these instead.`;
-	 	let html = '';
-	 	data.forEach((item, index) => {
-	 	 html += `<div class="suggestion-item" style="--i: ${index}"><div class="suggestion-item-header"><strong>Suggestion ${index + 1}</strong><span class="similarity-score">Similarity: ${(item.score || 0).toFixed(3)}<span class="tooltip-trigger" data-tooltip="Cosine similarity score. Higher is more similar."><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span></span></div><pre>${item.original_guide_text}</pre><button type="button" class="btn btn-secondary" onclick="useExistingGuide(this, \`${btoa(encodeURIComponent(item.original_guide_text))}\`)">Use this Guide</button></div>`;
-	 	});
-	 	contentTarget.innerHTML = html;
-	 }
-	} catch (e) {
-	 container.innerHTML = `<div class="error">Error finding guides: ${e.message}</div>`;
-	}
-}
-
-checkSimilarGuidesBtn.addEventListener('click', findSimilarGuides);
-
-findSimilarRequestsBtn.addEventListener('click', async () => {
-	const container = document.getElementById('similarRequestsContainer');
-	container.innerHTML = `<details class="similarity-search-container" id="requests-details"><summary><div class="spinner" style="width:20px;height:20px;border-width:2px;"></div> Searching past analyses with similar inputs...</summary><div class="similarity-search-content" id="requests-content-target"></div></details>`;
-	const detailsElement = document.getElementById('requests-details');
-	detailsElement.open = true;
-
-	try {
-	 const docText = await readFilesAsText(docFilesInput.files);
-	 const response = await fetch('/find_similar_requests', {
-	 	method: 'POST',
-	 	headers: {'Content-Type': 'application/json'},
-	 	body: JSON.stringify({ doc_text: docText })
-	 });
-	 const data = await response.json();
-	 if (!response.ok) throw new Error(data.error || 'Server error');
-
-	 const summary = detailsElement.querySelector('summary');
-	 const contentTarget = document.getElementById('requests-content-target');
-	 if (data.length === 0) {
-	 	summary.innerHTML = ` No similar past analyses found.`;
-	 	setTimeout(() => { detailsElement.open = false; }, 2000);
-	 } else {
-	 	summary.innerHTML = ` Found similar past analyses for your review:`;
-	 	let html = '';
-	 	data.forEach((item, index) => {
-	 	 html += `
-	 	 <details class="similarity-item" style="--i: ${index}">
-	 	 	<summary class="similarity-item-summary">
-	 	 	 <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><strong>Past Question:</strong> ${item.user_question}</span>
-	 	 	 <span class="similarity-score">Similarity: ${(item.score || 0).toFixed(3)}</span>
-	 	 	 <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-	 	 	</summary>
-	 	 	<div class="similarity-item-content">
-	 	 	 <div>
-	 	 	 	<div class="result-card-content" style="margin-top:0;">
-	 	 	 	 <h5 class="tooltip-trigger" data-tooltip="This is an AI-generated summary of the original input documents, redacting sensitive information.">Input Summary</h5>
-	 	 	 	 <p style="font-size:0.9rem; color: var(--text-med); margin:0;">${item.input_summary || 'Not available.'}</p>
-	 	 	 	</div>
-	 	 	 	<div class="similarity-item-actions">
-	 	 	 	 <button type="button" class="btn btn-secondary btn-small view-answer-btn" data-answer="${btoa(encodeURIComponent(item.final_answer || ''))}">Preview Full Answer</button>
-	 	 	 	 <button type="button" class="btn btn-secondary btn-small augment-context-btn" data-request-id="${item._id}" data-action="augment-current" style="margin-left: auto;">Add to Prompt</button>
-	 	 	 	</div>
-	 	 	 </div>
-	 	 	</div>
-	 	 </details>`;
-	 	});
-	 	contentTarget.innerHTML = html;
-	 }
-	} catch(e) {
-	 container.innerHTML = `<div class="error">Error finding requests: ${e.message}</div>`;
-	}
-});
-
-prepareFinalPromptBtn.addEventListener('click', async () => {
-	showLoading(true);
-	const guideTextarea = document.getElementById('optimizedGuideTextarea');
-	if (guideFilesInput.files.length > 0 && !guideTextarea.value) {
-	 guideTextarea.value = await readFilesAsText(guideFilesInput.files);
-	}
-	await updateFinalPromptPreview();
-	switchTab('tabFinalPrompt');
-	showLoading(false);
-});
-
-document.getElementById("uploadForm").addEventListener('submit', (e) => {
-	const finalPromptText = document.getElementById('finalPromptTextarea').value;
-	if (!finalPromptText) {
-	 alert('Please preview the final prompt before analyzing.');
-	 e.preventDefault();
-	 return;
-	}
-	showLoading(true);
-});
-}
 
 window.useExistingGuide = (button, base64GuideText) => {
 try {
@@ -1519,6 +1625,10 @@ function appendBubble(html, who, summaries = []) {
 	const bubble = document.createElement('div');
 	bubble.classList.add('chat-bubble', who.split(' ')[0]);
 	if (who.includes('ai-typing')) bubble.classList.add('ai-typing');
+
+    // Add animation class and remove it after the animation ends
+    bubble.classList.add('new');
+    setTimeout(() => { bubble.classList.remove('new'); }, 500);
 
 	if (who.startsWith('ai') && summaries && summaries.length > 0) {
 	 let reasoningHtml = `<details class="reasoning-spotlight" style="margin-bottom: 0.5rem; background: rgba(0,0,0,0.2);"><summary class="reasoning-toggle" style="padding: 0.5rem; font-size: 0.9rem;"><span>Show Reasoning</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="chevron" style="margin-left:auto;"><polyline points="6 9 12 15 18 9"></polyline></svg></summary><div class="reasoning-content"><div><ol class="reasoning-steps" style="padding: 0.5rem 1rem 1rem 2rem;">`;
@@ -1636,13 +1746,13 @@ if (findSimilarReasoningBtn) {
 	 	 	 	(item.reasoning_summaries || []).forEach(step => { html += `<li>${step}</li>`; });
 	 	 	 	html += `</ol></div>
 	 	 	 	 <div class="result-card-content">
-	 	     	<h5>Input Summary</h5>
+	 	     	<h5>Input Summary</h5>
 	 	 	 	 	<p style="font-size:0.9rem; color: var(--text-med); margin:0;">${item.input_summary || 'Not available.'}</p>
 	 	 	 	 </div>
 	 	 	 	 <div class="similarity-item-actions">
 	 	 	 	 	<button class="btn btn-secondary btn-small view-answer-btn" data-answer="${btoa(encodeURIComponent(item.final_answer || ''))}">Preview Full Answer</button>
 	 	 	 	 </div>
-	     	</div>
+	     	</div>
 	 	 	 </div>
 	 	 	</details>`;
 	 	 });

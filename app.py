@@ -9,6 +9,7 @@ Flask app with a full three-step wizard and multi-turn chat capabilities.
 - Evaluations: Now robustly handle errors and always report a status.
 - Hybrid Search: Includes a /hybrid_search endpoint for MongoDB Atlas.
 - Context Augmentation: Users can find past analyses and use their content to enrich the prompt for new requests.
+- Editable System Prompt: Users can now directly edit the system prompt in the final review step.
 """
 
 import os
@@ -442,8 +443,10 @@ def index():
                 optimized_guide_content = request.form.get("optimized_guide_content", "").strip()
                 reasoning_effort = request.form.get("reasoning_effort", "high")
                 augmented_context = request.form.get("augmented_context", "").strip()
+                system_prompt_submitted = request.form.get("system_prompt", "").strip()
+
                 
-                prompt_parts = [SYSTEM_PROMPT]
+                prompt_parts = [system_prompt_submitted or SYSTEM_PROMPT]
                 if augmented_context:
                     prompt_parts.append(f"## AUGMENTED CONTEXT FROM PAST ANALYSIS\n{augmented_context}")
                 if optimized_guide_content:
@@ -458,8 +461,6 @@ def index():
                 
                 request_id = None
                 if requests_collection is not None:
-                    # The 'optimized_guide_content' textarea is the single source of truth from the frontend.
-                    # This ensures that what's logged to the DB is exactly what was used in the prompt.
                     original_guide_text_from_files = "".join([parse_file_to_text(f) for f in request.files.getlist("guide_files")])
                     original_guide_text = optimized_guide_content or original_guide_text_from_files
                     
@@ -480,6 +481,7 @@ def index():
                         "input_summary": input_summary,
                         "doc_text": doc_text, "original_guide_text": original_guide_text,
                         "optimized_guide_submitted": optimized_guide_content, "final_prompt_submitted": final_prompt_to_use,
+                        "system_prompt_submitted": system_prompt_submitted,
                         "augmented_context": augmented_context,
                         "reasoning_summaries": reasoned_result["summaries"], "model_used": deployment,
                         "doc_text_embedding": doc_embedding, "original_guide_embedding": guide_embedding,
@@ -492,7 +494,6 @@ def index():
                     request_id = str(insert_result.inserted_id)
                     conversations_collection.insert_one({"request_id": request_id, "created_at": datetime.now(timezone.utc), "history": []})
                     
-                    # FINAL FIX: Use explicit 'is not None' checks for database objects, as they do not support truth value testing.
                     can_evaluate = all([
                         db is not None,
                         evaluations_collection is not None,
@@ -521,7 +522,9 @@ def index():
             except Exception as e:
                 logging.error(f"Error during analysis: {e}", exc_info=True)
                 error = f"Error during analysis: {e}"
-    return render_template("index.html", error=error, **result_data)
+    
+    # Pass the default system prompt to the template for the initial page load
+    return render_template("index.html", error=error, system_prompt_default=SYSTEM_PROMPT, **result_data)
 
 @app.route("/preview_final_prompt", methods=["POST"])
 def preview_final_prompt():
@@ -529,15 +532,16 @@ def preview_final_prompt():
     doc_files = request.files.getlist("document_files")
     optimized_guide_text = request.form.get("optimized_guide_content", "").strip()
     augmented_context = request.form.get("augmented_context", "").strip()
+    system_prompt = request.form.get("system_prompt", "").strip()
     
     if not doc_files or not user_question: return jsonify({"error": "Question and document files are required."}), 400
     doc_text = "".join([parse_file_to_text(f) for f in doc_files])
     
-    # Robustly determine the final guide text, prioritizing the textarea which is the frontend's source of truth.
     guide_files_content = "".join([parse_file_to_text(f) for f in request.files.getlist("guide_files")])
     final_guide_text = optimized_guide_text or guide_files_content
 
-    prompt_sections = [SYSTEM_PROMPT]
+    # Use the user-provided system prompt, or fall back to the default
+    prompt_sections = [system_prompt or SYSTEM_PROMPT]
     if augmented_context:
         prompt_sections.append(f"## AUGMENTED CONTEXT FROM PAST ANALYSIS\n{augmented_context}")
     if final_guide_text:
